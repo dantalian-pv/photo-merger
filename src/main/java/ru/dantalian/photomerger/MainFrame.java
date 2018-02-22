@@ -13,7 +13,7 @@ public class MainFrame {
 	
 	public void init() {
 		logger.info("Init main frame");
-		this.frame = new JFrame("FileList");
+		this.frame = new JFrame("Photo Merger");
 		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.frame.setSize(400, 400);
 		this.frame.getContentPane().add(new ListDemo());
