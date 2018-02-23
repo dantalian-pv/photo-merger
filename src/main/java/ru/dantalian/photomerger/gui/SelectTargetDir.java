@@ -3,6 +3,7 @@ package ru.dantalian.photomerger.gui;
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.Enumeration;
 
 import javax.swing.DefaultListModel;
@@ -72,7 +73,7 @@ public class SelectTargetDir extends JButton implements ActionListener {
 					if (err) {
 						continue;
 					}
-					this.progressStateManager.startProcess();
+					this.progressStateManager.startProcess(new DirItem(new File(dir)));
 					return;
 				} else {
 					return;
