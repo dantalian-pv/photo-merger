@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger;
+package ru.dantalian.photomerger.gui;
 
 import java.awt.Container;
 import java.awt.event.ActionEvent;
@@ -13,13 +13,14 @@ import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ru.dantalian.photomerger.ProgressStateManager;
 import ru.dantalian.photomerger.model.DirItem;
 
-public class SelectTargetFolder extends JButton implements ActionListener {
+public class SelectTargetDir extends JButton implements ActionListener {
 
 	private static final long serialVersionUID = 4441106526135161132L;
 
-	private static final Logger logger = LoggerFactory.getLogger(SelectTargetFolder.class);
+	private static final Logger logger = LoggerFactory.getLogger(SelectTargetDir.class);
 
 	private final DefaultListModel<DirItem> listModel;
 
@@ -27,7 +28,7 @@ public class SelectTargetFolder extends JButton implements ActionListener {
 
 	private JFileChooser fc;
 
-	public SelectTargetFolder(final String text,
+	public SelectTargetDir(final String text,
 			final DefaultListModel<DirItem> listModel,
 			final ProgressStateManager progressStateManager) {
 		super(text);

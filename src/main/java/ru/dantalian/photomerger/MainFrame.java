@@ -5,6 +5,8 @@ import javax.swing.JFrame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ru.dantalian.photomerger.gui.ListPanel;
+
 public class MainFrame {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MainFrame.class);
