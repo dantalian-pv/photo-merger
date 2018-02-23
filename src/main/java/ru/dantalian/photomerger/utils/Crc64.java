@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.backend;
+package ru.dantalian.photomerger.utils;
 
 import java.util.zip.Checksum;
 

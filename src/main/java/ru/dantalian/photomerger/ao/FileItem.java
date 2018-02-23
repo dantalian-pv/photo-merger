@@ -5,7 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import ru.dantalian.photomerger.backend.Crc64;
+import ru.dantalian.photomerger.utils.Crc64;
 
 public class FileItem implements Comparable<FileItem> {
 
