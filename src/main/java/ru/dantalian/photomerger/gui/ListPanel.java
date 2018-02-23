@@ -19,18 +19,6 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 
 	private static final long serialVersionUID = -2151734246788327983L;
 
-	public static final String openString = "+";
-
-	public static final String startString = "Start";
-
-	public static final String stopString = "Stop";
-
-	public static final String copyString = "Copy files";
-	
-	public static final String moveString = "Move files";
-
-	public static final String keepPathString = "Keep path";
-
 	private final JList<DirItem> list;
 
 	private final DefaultListModel<DirItem> listModel;
@@ -55,13 +43,13 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 		this.list = new SourceDirList(listModel);
 		final JScrollPane listScrollPane = new JScrollPane(list);
 
-		this.openButton = new SelectSourceDir(openString, listModel);
+		this.openButton = new SelectSourceDir(InterfaceStrings.ADD, listModel);
 
 		this.progressBar = new JProgressBar(0, 100);
 		this.progressBar.setValue(0);
 		this.progressBar.setEnabled(false);
 
-		this.startButton = new SelectTargetDir(startString, listModel, this);
+		this.startButton = new SelectTargetDir(InterfaceStrings.START, listModel, this);
 
 		final JPanel buttonPane = new JPanel();
 		buttonPane.setLayout(new BorderLayout(5, 5));
@@ -69,17 +57,17 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 		buttonPane.add(progressBar, BorderLayout.CENTER);
 		buttonPane.add(startButton, BorderLayout.EAST);
 
-		this.copyCheckBox = new JCheckBox(copyString);
+		this.copyCheckBox = new JCheckBox(InterfaceStrings.COPY);
 		this.copyCheckBox.setSelected(true);
 		this.copyCheckBox.addChangeListener(new ChangeListener() {
 			
 			@Override
 			public void stateChanged(final ChangeEvent e) {
-				copyCheckBox.setText((copyCheckBox.isSelected()) ? copyString : moveString);
+				copyCheckBox.setText((copyCheckBox.isSelected()) ? InterfaceStrings.COPY : InterfaceStrings.MOVE);
 			}
 		});
 
-		this.keepPathCheckBox = new JCheckBox(keepPathString);
+		this.keepPathCheckBox = new JCheckBox(InterfaceStrings.KEEP_PATH);
 		this.keepPathCheckBox.setSelected(false);
 
 		final JPanel checkBoxPane = new JPanel();
@@ -108,8 +96,18 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 	}
 
 	private void startStop(final boolean start) {
+		if (start) {
+			// Start long run calculations
+			this.progressBar.setIndeterminate(true);
+			this.progressBar.setString(InterfaceStrings.CALCULATING_AMOUNT_OF_WORK);
+		} else {
+			// Stop all background threads
+			// Reset progress bar
+			this.progressBar.setIndeterminate(false);
+			this.progressBar.setValue(0);
+		}
 		this.started = start;
-		this.startButton.setText((start) ? stopString : startString);
+		this.startButton.setText((start) ? InterfaceStrings.STOP : InterfaceStrings.START);
 		this.list.setEnabled(!start);
 		this.openButton.setEnabled(!start);
 		this.progressBar.setEnabled(start);
