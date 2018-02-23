@@ -6,21 +6,28 @@ import java.io.File;
 import java.util.Enumeration;
 
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JFileChooser;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SelectSourceFolderListener implements ActionListener {
+import ru.dantalian.photomerger.model.DirItem;
 
-	private static final Logger logger = LoggerFactory.getLogger(SelectSourceFolderListener.class);
+public class SelectSourceFolder extends JButton implements ActionListener {
 
-	private final DefaultListModel listModel;
+	private static final long serialVersionUID = 7860567815750245577L;
 
-	private JFileChooser fc;
+	private static final Logger logger = LoggerFactory.getLogger(SelectSourceFolder.class);
 
-	public SelectSourceFolderListener(DefaultListModel listModel) {
-		super();
+	private final DefaultListModel<DirItem> listModel;
+
+	private final JFileChooser fc;
+
+	public SelectSourceFolder(final String text, final DefaultListModel<DirItem> listModel) {
+		super(text);
+		super.setActionCommand(text);
+		super.addActionListener(this);
 		this.listModel = listModel;
 		fc = new JFileChooser();
 		fc.setMultiSelectionEnabled(true);
@@ -34,10 +41,10 @@ public class SelectSourceFolderListener implements ActionListener {
 			File[] dirs = fc.getSelectedFiles();
 			for (File dir: dirs) {
 				String s = dir.getPath();
-				Enumeration en = listModel.elements();
+				Enumeration<DirItem> en = listModel.elements();
 				boolean found = false;
 				while (en.hasMoreElements()) {
-					final String sdir = (String) en.nextElement();
+					final String sdir = en.nextElement().getPath();
 					if (s.contains(sdir)) {
 						found = true;
 						break;
@@ -45,7 +52,7 @@ public class SelectSourceFolderListener implements ActionListener {
 				}
 				if (!found) {
 					logger.info("add {}", dir);
-					listModel.addElement(dir.getPath());
+					listModel.addElement(new DirItem(dir));
 				}
 			}
 		}

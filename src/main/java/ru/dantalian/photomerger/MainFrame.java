@@ -16,7 +16,7 @@ public class MainFrame {
 		this.frame = new JFrame("Photo Merger");
 		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.frame.setSize(400, 400);
-		this.frame.getContentPane().add(new ListDemo());
+		this.frame.getContentPane().add(new ListPanel());
 		this.frame.setVisible(true);
 	}
 
