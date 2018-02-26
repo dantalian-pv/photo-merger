@@ -1,11 +1,11 @@
 package ru.dantalian.photomerger.backend;
 
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
@@ -62,7 +62,7 @@ public class CalculateFilesTask {
 		return futures;
 	}
 
-	public void finishCalculations() {
+	public void finish() {
 		timer.cancel();
 	}
 	
@@ -82,49 +82,23 @@ public class CalculateFilesTask {
 		public void run() {
 			try {
 				logger.info("Calculating files in {}", dirItem);
-				Files.walkFileTree(this.dirItem.getDir().toPath(), new FileVisitor<Path>() {
-
-					@Override
-					public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-						if (!progress.isStarted()) {
-							return FileVisitResult.TERMINATE;
-						}
-						if (dir.toFile().isHidden()) {
-							return FileVisitResult.SKIP_SUBTREE;
-						}
-						return FileVisitResult.CONTINUE;
-					}
-
-					@Override
-					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-						if (!progress.isStarted()) {
-							return FileVisitResult.TERMINATE;
-						}
-						if (!file.toFile().isHidden()) {
-							filesCount.incrementAndGet();
-						}
-						return FileVisitResult.CONTINUE;
-					}
-
-					@Override
-					public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-						if (!progress.isStarted()) {
-							return FileVisitResult.TERMINATE;
-						}
-						return FileVisitResult.CONTINUE;
-					}
-
-					@Override
-					public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-						if (!progress.isStarted()) {
-							return FileVisitResult.TERMINATE;
-						}
-						return FileVisitResult.CONTINUE;
-					}
-				});
+				Files.walkFileTree(this.dirItem.getDir().toPath(),
+						Collections.singleton(FileVisitOption.FOLLOW_LINKS),
+						Integer.MAX_VALUE,
+						new OnlyFileVisitor(progress, new IncrementCounterVisitor()));
+				logger.info("Finished calculating files in {}", dirItem);
 			} catch (IOException e) {
 				logger.error("Failed to visit tree " + dirItem, e);
 			}
+		}
+		
+	}
+	
+	class IncrementCounterVisitor implements VisitSingleFileCommand {
+
+		@Override
+		public void visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+			filesCount.incrementAndGet();
 		}
 		
 	}

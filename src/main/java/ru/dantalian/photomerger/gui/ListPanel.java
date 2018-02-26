@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import ru.dantalian.photomerger.ProgressStateManager;
 import ru.dantalian.photomerger.backend.CalculateFilesTask;
 import ru.dantalian.photomerger.backend.ChainStoppedException;
+import ru.dantalian.photomerger.backend.StoreMetadataTask;
 import ru.dantalian.photomerger.model.DirItem;
 
 public class ListPanel extends JPanel implements ProgressStateManager {
@@ -50,8 +51,6 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 	
 	private final Timer chainTimer = new Timer("tasks-chain", true);
 	
-	private final CalculateFilesTask calculateFilesTask;
-
 	private volatile boolean started;
 
 	public ListPanel() {
@@ -66,7 +65,9 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 
 		this.progressBar = new JProgressBar(0, 100);
 		this.progressBar.setValue(0);
-		this.progressBar.setEnabled(false);
+		this.progressBar.setString("<- Add source directories and then select a target ->");
+		this.progressBar.setStringPainted(true);
+		//this.progressBar.setEnabled(false);
 
 		this.startButton = new SelectTargetDir(InterfaceStrings.START, listModel, this);
 
@@ -87,7 +88,7 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 		});
 
 		this.keepPathCheckBox = new JCheckBox(InterfaceStrings.KEEP_PATH);
-		this.keepPathCheckBox.setSelected(false);
+		this.keepPathCheckBox.setSelected(true);
 
 		final JPanel checkBoxPane = new JPanel();
 		checkBoxPane.setLayout(new BorderLayout(5, 5));
@@ -118,7 +119,6 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 			}
 		}, 1000, 1000);
 		
-		this.calculateFilesTask = new CalculateFilesTask(this);
 	}
 	
 	private DirItem targetDir;
@@ -169,18 +169,19 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 		} else {
 			// Stop all background threads
 			// Reset progress bar
-			this.progressBar.setIndeterminate(false);
-			this.progressBar.setValue(0);
 			progressText = "";
 			progressCur = "";
 			progressMax = "";
+			this.progressBar.setIndeterminate(false);
+			this.progressBar.setValue(0);
+			this.progressBar.setString("Process aborted. Run again");
 		}
 		this.started = start;
 		this.startButton.setText((start) ? InterfaceStrings.STOP : InterfaceStrings.START);
 		this.list.setEnabled(!start);
 		this.openButton.setEnabled(!start);
-		this.progressBar.setEnabled(start);
-		this.progressBar.setStringPainted(start);
+		//this.progressBar.setEnabled(start);
+		//this.progressBar.setStringPainted(start);
 		this.copyCheckBox.setEnabled(!start);
 		this.keepPathCheckBox.setEnabled(!start);
 	}
@@ -197,6 +198,7 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 				}
 
 				checkState();
+				final CalculateFilesTask calculateFilesTask = new CalculateFilesTask(ListPanel.this);
 				final List<Future<Boolean>> calculateFiles = calculateFilesTask.calculateFiles(sourceDirs, targetDir);
 				for (final Future<Boolean> future: calculateFiles) {
 					checkState();
@@ -204,8 +206,19 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 				}
 				checkState();
 				final long filesCount = calculateFilesTask.getFilesCount();
-				calculateFilesTask.finishCalculations();
-				
+				calculateFilesTask.finish();
+
+				final StoreMetadataTask storeMetadataTask = new StoreMetadataTask(ListPanel.this, filesCount);
+				final List<Future<Boolean>> storeMetadata = storeMetadataTask.storeMetadata(sourceDirs, targetDir);
+				for (final Future<Boolean> future: storeMetadata) {
+					checkState();
+					future.get();
+				}
+				checkState();
+				storeMetadataTask.finish();
+
+				stopProcess();
+				progressBar.setString("Succesfully finished merging " + filesCount + " files");
 			} catch (InterruptedException e) {
 				logger.error("Failed to calculate files", e);
 			} catch(final ChainStoppedException e) {
