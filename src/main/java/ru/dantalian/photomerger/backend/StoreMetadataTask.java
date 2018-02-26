@@ -9,10 +9,10 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.PriorityQueue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
@@ -68,7 +68,7 @@ public class StoreMetadataTask {
 			public void run() {
 				if (progress.isStarted() && filesCount.get() > 0L) {
 					progress.setProgressText("Storing metadata");
-					final int percent = (int) (filesCount.get() * 50L / totalCount);
+					final int percent = (int) (filesCount.get() * 33L / totalCount);
 					progress.setCurrent("" + filesCount.get(), percent);
 					progress.setMax("" + totalCount);
 				}
@@ -131,7 +131,7 @@ public class StoreMetadataTask {
 		private final DirItem targetDir;
 		private final List<DirItem> metadataFiles;
 
-		private final PriorityQueue<FileItem> queue = new PriorityQueue<>(LIMIT);
+		private final List<FileItem> queue = new ArrayList<>(LIMIT);
 
 		public WriteMetadataCommand(final DirItem sourceDir, final DirItem targetDir,
 				final List<DirItem> metadataFiles) {
@@ -160,6 +160,7 @@ public class StoreMetadataTask {
 		private void writeData() throws IOException {
 			final Path metadataPath = getMetadataPath(targetDir);
 			logger.info("Storing metadata for {} to {} files = {}", sourceDir, metadataPath, queue.size());
+			Collections.sort(queue);
 			try (final PrintWriter writer = new PrintWriter(new BufferedOutputStream(
 					new FileOutputStream(metadataPath.toFile())))) {
 				for (final FileItem fileItem: queue) {

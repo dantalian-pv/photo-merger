@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import ru.dantalian.photomerger.ProgressStateManager;
 import ru.dantalian.photomerger.backend.CalculateFilesTask;
 import ru.dantalian.photomerger.backend.ChainStoppedException;
+import ru.dantalian.photomerger.backend.MergeMetadataTask;
 import ru.dantalian.photomerger.backend.StoreMetadataTask;
 import ru.dantalian.photomerger.model.DirItem;
 
@@ -109,7 +110,7 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 						str += progressText;
 					}
 					if (!progressCur.isEmpty()) {
-						str += ": in " + progressCur;
+						str += ": for " + progressCur;
 					}
 					if (!progressMax.isEmpty()) {
 						str += " of " + progressMax;
@@ -219,9 +220,12 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 				storeMetadataTask.finish();
 				
 				// Merging all metadata files into one
+				MergeMetadataTask mergeTask = new MergeMetadataTask(ListPanel.this, targetDir);
+				final DirItem metadataFile = mergeTask.mergeMetadata(metadataFiles);
 
 				stopProcess();
 				progressBar.setString("Succesfully finished merging " + filesCount + " files");
+				progressBar.setValue(100);
 			} catch (InterruptedException e) {
 				logger.error("Failed to calculate files", e);
 			} catch(final ChainStoppedException e) {

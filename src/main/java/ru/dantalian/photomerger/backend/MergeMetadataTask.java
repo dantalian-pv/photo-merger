@@ -1,6 +1,10 @@
 package ru.dantalian.photomerger.backend;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -20,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import ru.dantalian.photomerger.ProgressStateManager;
 import ru.dantalian.photomerger.model.DirItem;
+import ru.dantalian.photomerger.model.FileItem;
+import ru.dantalian.photomerger.utils.FileItemUtils;
 
 public class MergeMetadataTask {
 
@@ -29,13 +35,13 @@ public class MergeMetadataTask {
 
 	private static final String METADATA_DIR_NAME = ".metadata";
 
-	private static final int LIMIT = 1000;
-
 	private final AtomicLong counter = new AtomicLong(0L);
 
 	private final ProgressStateManager progress;
+	
+	private final DirItem targetDir;
 
-	private final long totalCount;
+	private volatile long totalCount;
 
 	private final AtomicLong filesCount = new AtomicLong(0);
 	
@@ -44,22 +50,25 @@ public class MergeMetadataTask {
 
 	private final Timer timer = new Timer("store-metadata-progress", true);
 
-	public MergeMetadataTask(final ProgressStateManager progress, final long totalCount) {
+	public MergeMetadataTask(final ProgressStateManager progress, final DirItem targetDir) {
 		this.progress = progress;
-		this.totalCount = totalCount;
+		this.targetDir = targetDir;
 	}
 
 	public DirItem mergeMetadata(final List<DirItem> aMetadataFiles)
 			throws InterruptedException, ExecutionException {
 		filesCount.set(0);
+		// Geometric progression with b1 = size q = 1/2 and n = log2(size)
+		totalCount = (long) (aMetadataFiles.size() * 2 * (1 - Math.pow(0.5,
+				(Math.log(aMetadataFiles.size())/Math.log(2))))) + 1L;
 
 		timer.scheduleAtFixedRate(new TimerTask() {
 
 			@Override
 			public void run() {
 				if (progress.isStarted() && filesCount.get() > 0L) {
-					progress.setProgressText("Storing metadata");
-					final int percent = (int) (filesCount.get() * 50L / totalCount);
+					progress.setProgressText("Merging metadata");
+					final int percent = 33 + (int) (filesCount.get() * 33L / totalCount);
 					progress.setCurrent("" + filesCount.get(), percent);
 					progress.setMax("" + totalCount);
 				}
@@ -68,21 +77,34 @@ public class MergeMetadataTask {
 
 		List<DirItem> metadataFiles = aMetadataFiles;
 		while (true) {
+			if (metadataFiles.size() == 1) {
+				final DirItem finalItem = metadataFiles.get(0);
+				logger.info("Complete merged metadata {}", finalItem);
+				return finalItem;
+			}
 			final List<MergeCommand> commands = new LinkedList<>();
-			
-			Iterator<DirItem> iterator = metadataFiles.iterator();
+
+			final Iterator<DirItem> iterator = metadataFiles.iterator();
+			boolean createEmpty = true;
 			while (iterator.hasNext()) {
 				final DirItem left = iterator.next();
+				filesCount.incrementAndGet();
 				if (!iterator.hasNext()) {
-					return left;
+					metadataFiles = new LinkedList<>();
+					metadataFiles.add(left);
+					createEmpty = false;
+					break;
 				}
 				final DirItem right = iterator.next();
+				filesCount.incrementAndGet();
 				
 				commands.add(new MergeCommand(left, right));
 			}
 			
 			final List<Future<DirItem>> futures = pool.invokeAll(commands);
-			metadataFiles = new LinkedList<>();
+			if (createEmpty) {
+				metadataFiles = new LinkedList<>();
+			}
 			for (final Future<DirItem> future: futures) {
 				metadataFiles.add(future.get());
 			}
@@ -115,8 +137,45 @@ public class MergeMetadataTask {
 
 		@Override
 		public DirItem call() throws Exception {
-			// TODO Auto-generated method stub
-			return null;
+			final Path mergedPath = getMetadataPath(MergeMetadataTask.this.targetDir);
+			try(BufferedReader leftReader = new BufferedReader(new FileReader(left.getDir()));
+					BufferedReader rightReader = new BufferedReader(new FileReader(right.getDir()));
+					PrintWriter writer = new PrintWriter(new FileWriter(mergedPath.toFile()))) {
+				final Iterator<String> leftIterator = leftReader.lines().iterator();
+				final Iterator<String> rightIterator = rightReader.lines().iterator();
+				FileItem leftItem = null;
+				FileItem rightItem = null;
+				while(leftIterator.hasNext() || rightIterator.hasNext()) {
+					leftItem = (leftIterator.hasNext() && leftItem == null)
+							? FileItemUtils.createFileItem(leftIterator.next()) : leftItem;
+					rightItem = (rightIterator.hasNext() && rightItem == null)
+							? FileItemUtils.createFileItem(rightIterator.next()) : rightItem;
+					if (leftItem == null && rightItem != null) {
+						writer.println(FileItemUtils.externalize(rightItem));
+						rightItem = null;
+					} else if (leftItem != null && rightItem == null) {
+						writer.println(FileItemUtils.externalize(leftItem));
+						leftItem = null;
+					} else {
+						if (leftItem.compareTo(rightItem) == 0) {
+							writer.println(FileItemUtils.externalize(leftItem));
+							leftItem = null;
+							writer.println(FileItemUtils.externalize(rightItem));
+							rightItem = null;
+						} else if (leftItem.compareTo(rightItem) < 0) {
+							writer.println(FileItemUtils.externalize(leftItem));
+							leftItem = null;
+						} else {
+							writer.println(FileItemUtils.externalize(rightItem));
+							rightItem = null;
+						}
+					}
+				}
+			} finally {
+				left.getDir().delete();
+				right.getDir().delete();
+			}
+			return new DirItem(mergedPath.toFile());
 		}
 		
 	}

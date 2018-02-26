@@ -28,6 +28,9 @@ public class FileItem implements Comparable<FileItem> {
 
 	@Override
 	public int compareTo(final FileItem o) {
+		if (o == null) {
+			return -1;
+		}
 		return Long.compare(this.crc, o.crc);
 	}
 
