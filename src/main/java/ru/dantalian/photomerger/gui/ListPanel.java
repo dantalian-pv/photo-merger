@@ -209,13 +209,16 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 				calculateFilesTask.finish();
 
 				final StoreMetadataTask storeMetadataTask = new StoreMetadataTask(ListPanel.this, filesCount);
-				final List<Future<Boolean>> storeMetadata = storeMetadataTask.storeMetadata(sourceDirs, targetDir);
-				for (final Future<Boolean> future: storeMetadata) {
+				final List<Future<List<DirItem>>> storeMetadata = storeMetadataTask.storeMetadata(sourceDirs, targetDir);
+				final List<DirItem> metadataFiles = new LinkedList<>();
+				for (final Future<List<DirItem>> future: storeMetadata) {
 					checkState();
-					future.get();
+					metadataFiles.addAll(future.get());
 				}
 				checkState();
 				storeMetadataTask.finish();
+				
+				// Merging all metadata files into one
 
 				stopProcess();
 				progressBar.setString("Succesfully finished merging " + filesCount + " files");

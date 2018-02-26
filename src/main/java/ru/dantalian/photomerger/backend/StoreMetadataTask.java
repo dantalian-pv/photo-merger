@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -57,7 +58,7 @@ public class StoreMetadataTask {
 		this.totalCount = totalCount;
 	}
 
-	public List<Future<Boolean>> storeMetadata(final List<DirItem> sourceDirs, final DirItem targetDir)
+	public List<Future<List<DirItem>>> storeMetadata(final List<DirItem> sourceDirs, final DirItem targetDir)
 			throws InterruptedException {
 		filesCount.set(0);
 
@@ -74,11 +75,11 @@ public class StoreMetadataTask {
 			}
 		}, 1000, 1000);
 
-		final List<Future<Boolean>> futures = new LinkedList<>();
+		final List<Future<List<DirItem>>> futures = new LinkedList<>();
 
-		futures.add(pool.submit(new StoreMetadataCommand(targetDir, targetDir), Boolean.TRUE));
+		futures.add(pool.submit(new StoreMetadataCommand(targetDir, targetDir)));
 		for (final DirItem item: sourceDirs) {
-			futures.add(pool.submit(new StoreMetadataCommand(item, targetDir), Boolean.TRUE));
+			futures.add(pool.submit(new StoreMetadataCommand(item, targetDir)));
 		}
 
 		return futures;
@@ -98,7 +99,7 @@ public class StoreMetadataTask {
 			.resolve(METADATA_FILE_NAME + "-" + counter.incrementAndGet());
 	}
 
-	class StoreMetadataCommand implements Runnable {
+	class StoreMetadataCommand implements Callable<List<DirItem>> {
 
 		private final DirItem sourceDir;
 
@@ -110,15 +111,16 @@ public class StoreMetadataTask {
 		}
 
 		@Override
-		public void run() {
-			try (final WriteMetadataCommand command = new WriteMetadataCommand(sourceDir, targetDir)) {
+		public List<DirItem> call() throws Exception {
+			final List<DirItem> metadataFiles = new LinkedList<>();
+			try (final WriteMetadataCommand command = new WriteMetadataCommand(sourceDir, targetDir,
+					metadataFiles)) {
 				Files.walkFileTree(this.sourceDir.getDir().toPath(),
 						Collections.singleton(FileVisitOption.FOLLOW_LINKS),
 						Integer.MAX_VALUE,
 						new OnlyFileVisitor(progress, command));
-			} catch (final Exception e) {
-				logger.error("Storing metadata failed", e);
 			}
+			return metadataFiles;
 		}
 
 	}
@@ -127,12 +129,15 @@ public class StoreMetadataTask {
 
 		private final DirItem sourceDir;
 		private final DirItem targetDir;
+		private final List<DirItem> metadataFiles;
 
 		private final PriorityQueue<FileItem> queue = new PriorityQueue<>(LIMIT);
 
-		public WriteMetadataCommand(final DirItem sourceDir, final DirItem targetDir) {
+		public WriteMetadataCommand(final DirItem sourceDir, final DirItem targetDir,
+				final List<DirItem> metadataFiles) {
 			this.sourceDir = sourceDir;
 			this.targetDir = targetDir;
+			this.metadataFiles = metadataFiles;
 		}
 
 		@Override
@@ -162,6 +167,7 @@ public class StoreMetadataTask {
 				}
 			} finally {
 				queue.clear();
+				metadataFiles.add(new DirItem(metadataPath.toFile()));
 			}
 		}
 
