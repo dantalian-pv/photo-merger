@@ -11,6 +11,7 @@ Exactly for this purpose this application was created. The application detects d
 ## Synopsis
 
 The application has the next workflow:
+
 * Calculate CRC (crc64) for all files which are going to be merged into one "target" folder;
 * Store this data into temporary file because metadata about all files, possibly, will not fit into RAM;
 * Sort metadata based on CRC;
@@ -27,13 +28,17 @@ To run the application `jvm` (`java`, `jre`) version 8.0 is needed
 ### Running
 
 Run the application using:
+
 `$> java -jar photo-merger.jar`
+
 Run the application storing output into the log file:
+
 `$> java -jar photo-merger.jar > out.log`
 
 ### User interface
 
 The application contains:
+
 * "Copy/Move files" checkbox - if selected, copy files to target folder, otherwise - move files
 * "Keep path" - if checked - copy/move files keeping original folder structure, otherwise - copy only file without subfolders. (See details below)
 * "+" - Add source folders (can be multiple) to the list
@@ -42,12 +47,17 @@ The application contains:
 ### "Keep path" explanation
 
 When "Keep path" checkbox is selected the application will copy/move files keeping subfolder structure.
+
 For example:
+
 * Source folder is: `/tmp/src`
 * Which contains one file with path: `/tmp/src/dev/release/index.html`
 * And target folder is `/home/user/target`
 
-If the checkbox is **selected** then file will be copied/moved to: `/home/user/target/dev/release/index.html`. So subfolder 'dev/release' will be created in the target folder.
+If the checkbox is **selected** then file will be copied/moved to: `/home/user/target/dev/release/index.html`.
+ 
+So subfolder `dev/release` will be created in the target folder.
+
 But **not selected** the fill will be copied/moved to: `/home/user/target/index.html`.
 
 ### What if?
@@ -57,6 +67,7 @@ What will happen when the application sees that some file in the target folder w
 ## Technical details
 
 Workflow:
+
 1. Calculate amount of files in all source folders and target folder (skipping hidden folders and files), and use this number to show adequate progress bar;
 2. Calculate CRC for every file and store this metadata into a temporary file (`target/.metadata/.metadata-N`) by batches by M (default: 1000) items in ordered way, based on CRC;
 3. Merge this batches into one big file keeping items in the ordered way;
