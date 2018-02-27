@@ -48,7 +48,7 @@ public class MergeMetadataTask {
 	private final ThreadPoolExecutor pool = new ThreadPoolExecutor(4, 16, 1, TimeUnit.MINUTES,
 			new LinkedBlockingQueue<>(), new DaemonThreadFactory("store-metadata"));
 
-	private final Timer timer = new Timer("store-metadata-progress", true);
+	private final Timer timer = new Timer("merge-metadata-progress", true);
 
 	public MergeMetadataTask(final ProgressStateManager progress, final DirItem targetDir) {
 		this.progress = progress;

@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import ru.dantalian.photomerger.ProgressStateManager;
 import ru.dantalian.photomerger.backend.CalculateFilesTask;
 import ru.dantalian.photomerger.backend.ChainStoppedException;
+import ru.dantalian.photomerger.backend.MergeFilesTask;
 import ru.dantalian.photomerger.backend.MergeMetadataTask;
 import ru.dantalian.photomerger.backend.StoreMetadataTask;
 import ru.dantalian.photomerger.model.DirItem;
@@ -191,6 +192,8 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 
 		@Override
 		public void run() {
+			long filesCount = 0;
+			Exception ex = null;
 			try {
 				final List<DirItem> sourceDirs = new LinkedList<>();
 				final Enumeration<DirItem> elements = listModel.elements();
@@ -206,7 +209,7 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 					future.get();
 				}
 				checkState();
-				final long filesCount = calculateFilesTask.getFilesCount();
+				filesCount = calculateFilesTask.getFilesCount();
 				calculateFilesTask.finish();
 
 				final StoreMetadataTask storeMetadataTask = new StoreMetadataTask(ListPanel.this, filesCount);
@@ -218,20 +221,38 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 				}
 				checkState();
 				storeMetadataTask.finish();
-				
+
 				// Merging all metadata files into one
 				MergeMetadataTask mergeTask = new MergeMetadataTask(ListPanel.this, targetDir);
 				final DirItem metadataFile = mergeTask.mergeMetadata(metadataFiles);
-
-				stopProcess();
-				progressBar.setString("Succesfully finished merging " + filesCount + " files");
-				progressBar.setValue(100);
+				mergeTask.finish();
+				
+				MergeFilesTask mergeFiles = new MergeFilesTask(ListPanel.this,
+						targetDir,
+						ListPanel.this.copyCheckBox.isSelected(),
+						ListPanel.this.keepPathCheckBox.isSelected(),
+						filesCount);
+				mergeFiles.mergeFiles(metadataFile);
+				mergeFiles.finish();
 			} catch (InterruptedException e) {
 				logger.error("Failed to calculate files", e);
+				ex = e;
 			} catch(final ChainStoppedException e) {
 				// Ignore it
+				ex = e;
 			} catch(final Exception e) {
 				logger.error("Executin chain failed", e);
+				ex = e;
+			} finally {
+				stopProcess();
+				if (ex == null) {
+					progressBar.setString("Succesfully finished merging " + filesCount + " files");
+					progressBar.setValue(100);
+					logger.info("Succesfully finished merging {} files", filesCount);
+				} else if (!(ex instanceof ChainStoppedException)) {
+					progressBar.setString("Error occured. See logs.");
+					progressBar.setValue(0);
+				}
 			}
 		}
 		
