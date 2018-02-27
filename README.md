@@ -58,7 +58,7 @@ If the checkbox is **selected** then file will be copied/moved to: `/home/user/t
  
 So subfolder `dev/release` will be created in the target folder.
 
-But **not selected** the fill will be copied/moved to: `/home/user/target/index.html`.
+But if checkbox is **not selected** the fill will be copied/moved to: `/home/user/target/index.html`.
 
 ### What if?
 
