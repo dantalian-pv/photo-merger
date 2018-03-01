@@ -150,7 +150,7 @@ public class MergeFilesTask {
 			dir.mkdirs();
 		}
 		if (copy) {
-			Files.copy(source, target);
+			Files.copy(source, target, StandardCopyOption.COPY_ATTRIBUTES);
 		} else {
 			Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
 		}
