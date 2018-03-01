@@ -152,7 +152,7 @@ public class MergeFilesTask {
 		if (copy) {
 			Files.copy(source, target);
 		} else {
-			Files.move(source, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.COPY_ATTRIBUTES);
+			Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
 		}
 		filesCount.incrementAndGet();
 	}
