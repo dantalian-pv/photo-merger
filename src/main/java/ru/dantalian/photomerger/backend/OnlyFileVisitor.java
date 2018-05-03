@@ -9,11 +9,11 @@ import java.nio.file.attribute.BasicFileAttributes;
 import ru.dantalian.photomerger.ProgressStateManager;
 
 public class OnlyFileVisitor implements FileVisitor<Path> {
-	
+
 	private final ProgressStateManager progress;
 
 	private final VisitSingleFileCommand command;
-	
+
 	public OnlyFileVisitor(final ProgressStateManager progress, final VisitSingleFileCommand command) {
 		this.progress = progress;
 		this.command = command;

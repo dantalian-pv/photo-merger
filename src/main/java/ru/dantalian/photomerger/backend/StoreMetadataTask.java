@@ -17,9 +17,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -48,14 +46,14 @@ public class StoreMetadataTask {
 
 	private final AtomicLong filesCount = new AtomicLong(0);
 
-	private final ThreadPoolExecutor pool = new ThreadPoolExecutor(4, 16, 1, TimeUnit.MINUTES,
-			new LinkedBlockingQueue<>(), new DaemonThreadFactory("store-metadata"));
+	private final ThreadPoolExecutor pool;
 
 	private final Timer timer = new Timer("store-metadata-progress", true);
 
 	public StoreMetadataTask(final ProgressStateManager progress, final long totalCount) {
 		this.progress = progress;
 		this.totalCount = totalCount;
+		this.pool = ThreadPoolFactory.getThreadPool(ThreadPoolFactory.STORE_META_POOL);
 	}
 
 	public List<Future<List<DirItem>>> storeMetadata(final List<DirItem> sourceDirs, final DirItem targetDir)

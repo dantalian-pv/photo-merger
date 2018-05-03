@@ -14,9 +14,7 @@ import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -45,14 +43,14 @@ public class MergeMetadataTask {
 
 	private final AtomicLong filesCount = new AtomicLong(0);
 	
-	private final ThreadPoolExecutor pool = new ThreadPoolExecutor(4, 16, 1, TimeUnit.MINUTES,
-			new LinkedBlockingQueue<>(), new DaemonThreadFactory("store-metadata"));
+	private final ThreadPoolExecutor pool;
 
 	private final Timer timer = new Timer("merge-metadata-progress", true);
 
 	public MergeMetadataTask(final ProgressStateManager progress, final DirItem targetDir) {
 		this.progress = progress;
 		this.targetDir = targetDir;
+		this.pool = ThreadPoolFactory.getThreadPool(ThreadPoolFactory.MERGE_META_POOL);
 	}
 
 	public DirItem mergeMetadata(final List<DirItem> aMetadataFiles)

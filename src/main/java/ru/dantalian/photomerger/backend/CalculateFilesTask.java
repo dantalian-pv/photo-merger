@@ -11,9 +11,7 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -30,13 +28,13 @@ public class CalculateFilesTask {
 	
 	private final AtomicLong filesCount = new AtomicLong(0);
 	
-	private final ThreadPoolExecutor pool = new ThreadPoolExecutor(4, 16, 1, TimeUnit.MINUTES,
-			new LinkedBlockingQueue<>(), new DaemonThreadFactory("calculate-files"));
+	private final ThreadPoolExecutor pool;
 	
 	private final Timer timer = new Timer("calculate-files-progress", true);
 
 	public CalculateFilesTask(final ProgressStateManager progress) {
 		this.progress = progress;
+		this.pool = ThreadPoolFactory.getThreadPool(ThreadPoolFactory.CALC_FILES_POOL);
 	}
 
 	public List<Future<Boolean>> calculateFiles(final List<DirItem> sourceDirs, final DirItem targetDir) throws InterruptedException {
