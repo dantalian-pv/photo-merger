@@ -110,6 +110,7 @@ public class MergeFilesTask {
 									copyMoveFile(list.get(0), copy, keepPath);
 								} else {
 									logger.info("Found duplicate {} and {}", list.get(0), list.get(i));
+									filesCount.incrementAndGet();
 								}
 							}
 						}
