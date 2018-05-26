@@ -160,7 +160,10 @@ public class MergeFilesTask {
 			logger.debug("Target file already exists {}", target);
 			// Make additional check by comparing crc
 			FileItem targetItem = FileItemUtils.createFileItem(this.targetDir.getDir(), target.toFile(), true);
-			if (targetItem.compareTo(item) == 0) {
+			FileItem srcItem = item.getCrc() == 0 ?
+					FileItemUtils.createFileItem(new File(item.getRootPath()), source.toFile(), true)
+					: item;
+			if (targetItem.compareTo(srcItem) == 0) {
 				// Nothing to do, same file
 				return;
 			} else {
