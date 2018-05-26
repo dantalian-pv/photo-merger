@@ -78,8 +78,10 @@ Every step is running in multiple threads (default: 4) to make this tasks in par
 ### Algorithm complexity
 
 1. N - calculate amount of files
-2. N - calculate CRCs and store them into metadata files
+2. N - store all file entries into metadata files sorted by file size
 3. N*log(N) - merge metadata files
-4. N - move/copy files
+4. N - move/copy files and calculate CRC for files with the same size
 
 Sum: `3*N + N*log(N)`, or `O(N*log(N))`.
+
+As you can see here, there is one technical optimization not to calculate CRC for all files, but only for files with the same size.
