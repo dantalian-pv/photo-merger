@@ -145,9 +145,9 @@ public class MergeMetadataTask {
 				FileItem rightItem = null;
 				while(leftIterator.hasNext() || rightIterator.hasNext()) {
 					leftItem = (leftIterator.hasNext() && leftItem == null)
-							? FileItemUtils.createFileItem(leftIterator.next()) : leftItem;
+							? FileItemUtils.createFileItem(leftIterator.next(), false) : leftItem;
 					rightItem = (rightIterator.hasNext() && rightItem == null)
-							? FileItemUtils.createFileItem(rightIterator.next()) : rightItem;
+							? FileItemUtils.createFileItem(rightIterator.next(), false) : rightItem;
 					if (leftItem == null && rightItem != null) {
 						writer.println(FileItemUtils.externalize(rightItem));
 						rightItem = null;

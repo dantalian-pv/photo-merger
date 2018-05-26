@@ -8,6 +8,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicLong;
@@ -75,19 +81,39 @@ public class MergeFilesTask {
 				if (line1 != null) {
 					line2 = (line2 == null) ? reader.readLine() : line2;
 				}
-				FileItem item1 = (line1 != null) ? FileItemUtils.createFileItem(line1) : null;
-				FileItem item2 = (line2 != null) ? FileItemUtils.createFileItem(line2) : null;
+				FileItem item1 = (line1 != null) ? FileItemUtils.createFileItem(line1, false) : null;
+				FileItem item2 = (line2 != null) ? FileItemUtils.createFileItem(line2, false) : null;
 				if (item1 != null && item2 != null) {
 					// Compare
 					// Potentially can be multiple duplicates
+					final Map<Long, List<FileItem>> candidates = new HashMap<>();
 					while (item1.compareTo(item2) == 0) {
-						// Same files copy only one
-						logger.info("Found duplicate {} and {}", item1, item2);
+						if (candidates.isEmpty()) {
+							// Add only if it's first entry
+							final Long crc = FileItemUtils.calculateChecksum(new File(item1.getPath()));
+							final FileItem itemCrc = new FileItem(item1.getRootPath(), item1.getPath(), crc, item1.getSize());
+							candidates.put(crc, new LinkedList<>(Collections.singletonList(itemCrc)));
+						}
+						final Long crc = FileItemUtils.calculateChecksum(new File(item2.getPath()));
+						final FileItem itemCrc = new FileItem(item2.getRootPath(), item2.getPath(), crc, item2.getSize());
+						candidates.putIfAbsent(crc, new LinkedList<>());
+						candidates.get(crc).add(itemCrc);
 						line2 = reader.readLine();
-						item2 = (line2 != null) ? FileItemUtils.createFileItem(line2): null;
+						item2 = (line2 != null) ? FileItemUtils.createFileItem(line2, false): null;
 					}
-					// Copy/move only one file
-					copyMoveFile(item1, copy, keepPath);
+					if (!candidates.isEmpty()) {
+						for(final Entry<Long, List<FileItem>> entry: candidates.entrySet()) {
+							final List<FileItem> list = entry.getValue();
+							for (int i = 0; i < list.size(); i++) {
+								if (i == 0) {
+									// Copy/move only one file
+									copyMoveFile(list.get(0), copy, keepPath);
+								} else {
+									logger.info("Found duplicate {} and {}", list.get(0), list.get(i));
+								}
+							}
+						}
+					}
 					if (line2 == null) {
 						// Reached EOF
 						return;
@@ -132,7 +158,7 @@ public class MergeFilesTask {
 		if (target.toFile().exists()) {
 			logger.debug("Target file already exists {}", target);
 			// Make additional check by comparing crc
-			FileItem targetItem = FileItemUtils.createFileItem(this.targetDir.getDir(), target.toFile());
+			FileItem targetItem = FileItemUtils.createFileItem(this.targetDir.getDir(), target.toFile(), true);
 			if (targetItem.compareTo(item) == 0) {
 				// Nothing to do, same file
 				return;

@@ -143,7 +143,7 @@ public class StoreMetadataTask {
 			if (queue.size() >= LIMIT) {
 				writeData();
 			}
-			final FileItem fileItem = FileItemUtils.createFileItem(sourceDir.getDir(), file.toFile());
+			final FileItem fileItem = FileItemUtils.createFileItem(sourceDir.getDir(), file.toFile(), false);
 			queue.add(fileItem);
 			filesCount.incrementAndGet();
 		}
