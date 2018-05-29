@@ -69,9 +69,9 @@ What will happen when the application sees that some file in the target folder w
 Workflow:
 
 1. Calculate amount of files in all source folders and target folder (skipping hidden folders and files), and use this number to show adequate progress bar;
-2. Calculate CRC for every file and store this metadata into a temporary file (`target/.metadata/.metadata-N`) by batches by M (default: 1000) items in ordered way, based on CRC;
+2. Pick up a file size for every file and store this metadata into a temporary file (`target/.metadata/.metadata-N`) by batches by M (default: 1000) items in ordered way, based on file size;
 3. Merge this batches into one big file keeping items in the ordered way;
-4. Read this file and compare neighbor items. If they have the same CRC, then copy/move only first one;
+4. Read this file and compare neighbor items. If they have the same size - calculate CRC, then copy/move only first one if CRC is the same;
 
 Every step is running in multiple threads (default: 4) to make this tasks in parallel.
 
