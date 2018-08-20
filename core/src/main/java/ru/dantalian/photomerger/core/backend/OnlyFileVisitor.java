@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.backend;
+package ru.dantalian.photomerger.core.backend;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -6,7 +6,7 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import ru.dantalian.photomerger.ProgressStateManager;
+import ru.dantalian.photomerger.core.ProgressStateManager;
 
 public class OnlyFileVisitor implements FileVisitor<Path> {
 

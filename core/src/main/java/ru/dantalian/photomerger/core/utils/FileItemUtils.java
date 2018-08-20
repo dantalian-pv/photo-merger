@@ -1,11 +1,11 @@
-package ru.dantalian.photomerger.utils;
+package ru.dantalian.photomerger.core.utils;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import ru.dantalian.photomerger.model.FileItem;
+import ru.dantalian.photomerger.core.model.FileItem;
 
 public class FileItemUtils {
 

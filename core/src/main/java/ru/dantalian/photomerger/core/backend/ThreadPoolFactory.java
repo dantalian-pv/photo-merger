@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.backend;
+package ru.dantalian.photomerger.core.backend;
 
 import java.util.HashMap;
 import java.util.Map;

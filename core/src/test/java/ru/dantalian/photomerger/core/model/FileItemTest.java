@@ -1,10 +1,12 @@
-package ru.dantalian.photomerger.model;
+package ru.dantalian.photomerger.core.model;
 
 import static org.junit.Assert.assertThat;
 
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matchers;
 import org.junit.Test;
+
+import ru.dantalian.photomerger.core.model.FileItem;
 
 public class FileItemTest {
 

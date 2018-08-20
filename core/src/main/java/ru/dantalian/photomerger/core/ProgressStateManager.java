@@ -1,6 +1,6 @@
-package ru.dantalian.photomerger;
+package ru.dantalian.photomerger.core;
 
-import ru.dantalian.photomerger.model.DirItem;
+import ru.dantalian.photomerger.core.model.DirItem;
 
 public interface ProgressStateManager {
 

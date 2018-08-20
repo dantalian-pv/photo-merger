@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.model;
+package ru.dantalian.photomerger.core.model;
 
 import java.io.File;
 

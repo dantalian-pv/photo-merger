@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.backend;
+package ru.dantalian.photomerger.core.backend;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;

@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger;
+package ru.dantalian.photomerger.ui;
 
 public class PhotoMergerMain {
 

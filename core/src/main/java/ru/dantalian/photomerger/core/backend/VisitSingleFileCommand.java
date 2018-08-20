@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.backend;
+package ru.dantalian.photomerger.core.backend;
 
 import java.io.IOException;
 import java.nio.file.Path;

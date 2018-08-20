@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.gui;
+package ru.dantalian.photomerger.ui.elements;
 
 public interface InterfaceStrings {
 

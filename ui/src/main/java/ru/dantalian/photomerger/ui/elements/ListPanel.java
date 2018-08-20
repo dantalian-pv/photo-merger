@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.gui;
+package ru.dantalian.photomerger.ui.elements;
 
 import java.awt.BorderLayout;
 import java.util.Enumeration;
@@ -21,13 +21,13 @@ import javax.swing.event.ChangeListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ru.dantalian.photomerger.ProgressStateManager;
-import ru.dantalian.photomerger.backend.CalculateFilesTask;
-import ru.dantalian.photomerger.backend.ChainStoppedException;
-import ru.dantalian.photomerger.backend.MergeFilesTask;
-import ru.dantalian.photomerger.backend.MergeMetadataTask;
-import ru.dantalian.photomerger.backend.StoreMetadataTask;
-import ru.dantalian.photomerger.model.DirItem;
+import ru.dantalian.photomerger.core.ProgressStateManager;
+import ru.dantalian.photomerger.core.backend.CalculateFilesTask;
+import ru.dantalian.photomerger.core.backend.ChainStoppedException;
+import ru.dantalian.photomerger.core.backend.MergeFilesTask;
+import ru.dantalian.photomerger.core.backend.MergeMetadataTask;
+import ru.dantalian.photomerger.core.backend.StoreMetadataTask;
+import ru.dantalian.photomerger.core.model.DirItem;
 
 public class ListPanel extends JPanel implements ProgressStateManager {
 

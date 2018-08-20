@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.backend;
+package ru.dantalian.photomerger.core.backend;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -23,10 +23,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ru.dantalian.photomerger.ProgressStateManager;
-import ru.dantalian.photomerger.model.DirItem;
-import ru.dantalian.photomerger.model.FileItem;
-import ru.dantalian.photomerger.utils.FileItemUtils;
+import ru.dantalian.photomerger.core.ProgressStateManager;
+import ru.dantalian.photomerger.core.model.DirItem;
+import ru.dantalian.photomerger.core.model.FileItem;
+import ru.dantalian.photomerger.core.utils.FileItemUtils;
 
 public class StoreMetadataTask {
 

@@ -1,11 +1,11 @@
-package ru.dantalian.photomerger;
+package ru.dantalian.photomerger.ui;
 
 import javax.swing.JFrame;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ru.dantalian.photomerger.gui.ListPanel;
+import ru.dantalian.photomerger.ui.elements.ListPanel;
 
 public class MainFrame {
 	

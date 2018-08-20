@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.gui;
+package ru.dantalian.photomerger.ui.elements;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,7 +10,7 @@ import javax.swing.JList;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 
-import ru.dantalian.photomerger.model.DirItem;
+import ru.dantalian.photomerger.core.model.DirItem;
 
 public class SourceDirList extends JList<DirItem> implements ActionListener {
 

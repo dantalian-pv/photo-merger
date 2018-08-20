@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.gui;
+package ru.dantalian.photomerger.ui.elements;
 
 import java.awt.Container;
 import java.awt.event.ActionEvent;
@@ -14,8 +14,8 @@ import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ru.dantalian.photomerger.ProgressStateManager;
-import ru.dantalian.photomerger.model.DirItem;
+import ru.dantalian.photomerger.core.ProgressStateManager;
+import ru.dantalian.photomerger.core.model.DirItem;
 
 public class SelectTargetDir extends JButton implements ActionListener {
 

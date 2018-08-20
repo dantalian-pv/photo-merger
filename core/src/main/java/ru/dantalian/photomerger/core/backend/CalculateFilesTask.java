@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.backend;
+package ru.dantalian.photomerger.core.backend;
 
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ru.dantalian.photomerger.ProgressStateManager;
-import ru.dantalian.photomerger.model.DirItem;
+import ru.dantalian.photomerger.core.ProgressStateManager;
+import ru.dantalian.photomerger.core.model.DirItem;
 
 public class CalculateFilesTask {
 
