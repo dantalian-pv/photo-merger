@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.core;
+package ru.dantalian.photomerger.ui;
 
 import ru.dantalian.photomerger.core.model.DirItem;
 

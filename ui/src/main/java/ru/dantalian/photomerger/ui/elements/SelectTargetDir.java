@@ -14,8 +14,8 @@ import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ru.dantalian.photomerger.core.ProgressStateManager;
 import ru.dantalian.photomerger.core.model.DirItem;
+import ru.dantalian.photomerger.ui.ProgressStateManager;
 
 public class SelectTargetDir extends JButton implements ActionListener {
 

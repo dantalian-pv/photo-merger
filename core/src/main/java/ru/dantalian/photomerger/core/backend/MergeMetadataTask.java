@@ -50,13 +50,13 @@ public class MergeMetadataTask extends AbstractExecutionTask<DirItem> {
 
 	private final List<DirItem> metadataFiles;
 
-	public MergeMetadataTask(final EventManager events, final DirItem targetDir,
-			final List<DirItem> metadataFiles) {
-		this(events, targetDir, metadataFiles, ThreadPoolFactory.getThreadPool(ThreadPoolFactory.MERGE_META_POOL));
+	public MergeMetadataTask(final DirItem targetDir,
+			final List<DirItem> metadataFiles, final EventManager events) {
+		this(targetDir, metadataFiles, events, ThreadPoolFactory.getThreadPool(ThreadPoolFactory.MERGE_META_POOL));
 	}
 
-	public MergeMetadataTask(final EventManager events, final DirItem targetDir,
-			final List<DirItem> metadataFiles, final ThreadPoolExecutor pool) {
+	public MergeMetadataTask(final DirItem targetDir, final List<DirItem> metadataFiles,
+			final EventManager events, final ThreadPoolExecutor pool) {
 		this.events = events;
 		this.targetDir = targetDir;
 		this.metadataFiles = Collections.unmodifiableList(metadataFiles);

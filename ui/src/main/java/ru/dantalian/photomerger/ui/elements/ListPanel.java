@@ -21,13 +21,15 @@ import javax.swing.event.ChangeListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ru.dantalian.photomerger.core.ProgressStateManager;
 import ru.dantalian.photomerger.core.backend.CalculateFilesTask;
 import ru.dantalian.photomerger.core.backend.ChainStoppedException;
+import ru.dantalian.photomerger.core.backend.EventManagerFactory;
 import ru.dantalian.photomerger.core.backend.MergeFilesTask;
 import ru.dantalian.photomerger.core.backend.MergeMetadataTask;
 import ru.dantalian.photomerger.core.backend.StoreMetadataTask;
 import ru.dantalian.photomerger.core.model.DirItem;
+import ru.dantalian.photomerger.core.model.EventManager;
+import ru.dantalian.photomerger.ui.ProgressStateManager;
 
 public class ListPanel extends JPanel implements ProgressStateManager {
 
@@ -202,38 +204,43 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 				}
 
 				checkState();
-				final CalculateFilesTask calculateFilesTask = new CalculateFilesTask(ListPanel.this);
-				final List<Future<Boolean>> calculateFiles = calculateFilesTask.calculateFiles(sourceDirs, targetDir);
-				for (final Future<Boolean> future: calculateFiles) {
+				final EventManager events = EventManagerFactory.getInstance();
+				final CalculateFilesTask calculateFilesTask = new CalculateFilesTask(
+						sourceDirs, targetDir, events);
+				final List<Future<Long>> calculateFiles = calculateFilesTask.execute();
+				long calcCount = 0;
+				for (final Future<Long> future: calculateFiles) {
 					checkState();
-					future.get();
+					calcCount += future.get();
 				}
 				checkState();
-				filesCount = calculateFilesTask.getFilesCount();
-				calculateFilesTask.finish();
+				filesCount = calcCount;
+				calculateFilesTask.interrupt();
 
-				final StoreMetadataTask storeMetadataTask = new StoreMetadataTask(ListPanel.this, filesCount);
-				final List<Future<List<DirItem>>> storeMetadata = storeMetadataTask.storeMetadata(sourceDirs, targetDir);
+				final StoreMetadataTask storeMetadataTask = new StoreMetadataTask(sourceDirs, targetDir, filesCount,
+						events);
+				final List<Future<List<DirItem>>> storeMetadata = storeMetadataTask.execute();
 				final List<DirItem> metadataFiles = new LinkedList<>();
 				for (final Future<List<DirItem>> future: storeMetadata) {
 					checkState();
 					metadataFiles.addAll(future.get());
 				}
 				checkState();
-				storeMetadataTask.finish();
+				storeMetadataTask.interrupt();
 
 				// Merging all metadata files into one
-				MergeMetadataTask mergeTask = new MergeMetadataTask(ListPanel.this, targetDir);
-				final DirItem metadataFile = mergeTask.mergeMetadata(metadataFiles);
-				mergeTask.finish();
+				final MergeMetadataTask mergeTask = new MergeMetadataTask(targetDir, metadataFiles, events);
+				final DirItem metadataFile = mergeTask.execute().iterator().next().get();
+				mergeTask.interrupt();
 				
-				MergeFilesTask mergeFiles = new MergeFilesTask(ListPanel.this,
-						targetDir,
+				final MergeFilesTask mergeFiles = new MergeFilesTask(targetDir,
+						metadataFile,
 						ListPanel.this.copyCheckBox.isSelected(),
 						ListPanel.this.keepPathCheckBox.isSelected(),
-						filesCount);
-				mergeFiles.mergeFiles(metadataFile);
-				mergeFiles.finish();
+						filesCount,
+						events);
+				mergeFiles.execute().iterator().next().get();
+				mergeFiles.interrupt();
 			} catch (InterruptedException e) {
 				logger.error("Failed to calculate files", e);
 				ex = e;

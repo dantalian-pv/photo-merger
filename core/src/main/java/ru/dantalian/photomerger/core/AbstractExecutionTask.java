@@ -25,6 +25,6 @@ public abstract class AbstractExecutionTask<T> implements ExecutionTask<T> {
 		return this.execute0();
 	}
 	
-	public abstract List<Future<T>> execute0() throws TaskExecutionException;
+	protected abstract List<Future<T>> execute0() throws TaskExecutionException;
 
 }

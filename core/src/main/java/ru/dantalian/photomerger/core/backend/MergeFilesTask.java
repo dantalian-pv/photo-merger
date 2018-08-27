@@ -14,25 +14,30 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ru.dantalian.photomerger.core.ProgressStateManager;
+import ru.dantalian.photomerger.core.AbstractExecutionTask;
+import ru.dantalian.photomerger.core.TaskExecutionException;
+import ru.dantalian.photomerger.core.events.MergeFilesEvent;
 import ru.dantalian.photomerger.core.model.DirItem;
+import ru.dantalian.photomerger.core.model.EventManager;
 import ru.dantalian.photomerger.core.model.FileItem;
 import ru.dantalian.photomerger.core.utils.FileItemUtils;
 
-public class MergeFilesTask {
+public class MergeFilesTask extends AbstractExecutionTask<Boolean> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MergeFilesTask.class);
 
-	private final ProgressStateManager progress;
+	private final EventManager events;
 	
 	private final DirItem targetDir;
+
+	private final DirItem metadataFile;
 	
 	private final boolean copy;
 
@@ -41,40 +46,25 @@ public class MergeFilesTask {
 	private final long totalCount;
 
 	private final AtomicLong filesCount = new AtomicLong(0);
-	
-	private final Timer timer = new Timer("store-metadata-progress", true);
 
-	public MergeFilesTask(final ProgressStateManager progress, final DirItem targetDir,
-			boolean copy, boolean keepPath, long totalCount) {
-		this.progress = progress;
+	public MergeFilesTask(final DirItem targetDir,
+			final DirItem metadataFile, boolean copy, boolean keepPath, long totalCount,
+			final EventManager events) {
 		this.targetDir = targetDir;
+		this.metadataFile = metadataFile;
 		this.copy = copy;
 		this.keepPath = keepPath;
 		this.totalCount = totalCount;
+		this.events = events;
 	}
 
-	public void mergeFiles(final DirItem metadataFile) throws IOException {
-		filesCount.set(0);
-
-		timer.scheduleAtFixedRate(new TimerTask() {
-
-			@Override
-			public void run() {
-				if (progress.isStarted() && filesCount.get() > 0L) {
-					progress.setProgressText("Merging files");
-					final int percent = 66 + (int) (filesCount.get() * 33L / totalCount);
-					progress.setCurrent("" + filesCount.get(), percent);
-					progress.setMax("" + totalCount);
-				}
-			}
-		}, 1000, 1000);
-		
+	public List<Future<Boolean>> execute0() throws TaskExecutionException {
 		try (final BufferedReader reader = new BufferedReader(new FileReader(metadataFile.getDir()))) {
 			String line1 = null;
 			String line2 = null;
 			while (true) {
-				if (!progress.isStarted()) {
-					return;
+				if (this.interrupted.get()) {
+					return Collections.singletonList(CompletableFuture.completedFuture(Boolean.FALSE));
 				}
 				line1 = (line1 == null) ? reader.readLine() : line1;
 				// Prevent reading after EOF
@@ -110,14 +100,15 @@ public class MergeFilesTask {
 									copyMoveFile(list.get(0), copy, keepPath);
 								} else {
 									logger.info("Found duplicate {} and {}", list.get(0), list.get(i));
-									filesCount.incrementAndGet();
+									this.events.publish(MergeFilesEvent.TOPIC,
+											MergeFilesEvent.newItem(this.filesCount.incrementAndGet(), totalCount));
 								}
 							}
 						}
 					}
 					if (line2 == null) {
 						// Reached EOF
-						return;
+						return Collections.singletonList(CompletableFuture.completedFuture(Boolean.FALSE));
 					}
 					line1 = line2;
 					line2 = null;
@@ -130,16 +121,18 @@ public class MergeFilesTask {
 					line1 = null;
 					line2 = null;
 				} else {
-					return;
+					return Collections.singletonList(CompletableFuture.completedFuture(Boolean.FALSE));
 				}
 			}
+		} catch (IOException e) {
+			throw new TaskExecutionException("Failed to merge files", e);
 		} finally {
 			metadataFile.getDir().delete();
 		}
 	}
 
 	private void copyMoveFile(final FileItem item, final boolean copy, final boolean keepPath) throws IOException {
-		if (!progress.isStarted()) {
+		if (this.interrupted.get()) {
 			return;
 		}
 		Path target = this.targetDir.getDir().toPath();
@@ -184,11 +177,8 @@ public class MergeFilesTask {
 		} else {
 			Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
 		}
-		filesCount.incrementAndGet();
-	}
-
-	public void finish() {
-		timer.cancel();
+		this.events.publish(MergeFilesEvent.TOPIC,
+				MergeFilesEvent.newItem(this.filesCount.incrementAndGet(), totalCount));
 	}
 
 }

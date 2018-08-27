@@ -54,7 +54,7 @@ public class StoreMetadataTask extends AbstractExecutionTask<List<DirItem>> {
 	private final AtomicLong counter = new AtomicLong(0L);
 	
 	public StoreMetadataTask(final List<DirItem> sourceDirs, final DirItem targetDir,
-			final EventManager events, final long totalCount) {
+			final long totalCount, final EventManager events) {
 		this(sourceDirs, targetDir, totalCount, events,
 				ThreadPoolFactory.getThreadPool(ThreadPoolFactory.STORE_META_POOL));
 	}

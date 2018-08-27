@@ -8,9 +8,9 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ import ru.dantalian.photomerger.core.events.CalculateFilesEvent;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
 
-public class CalculateFilesTask extends AbstractExecutionTask<Boolean> {
+public class CalculateFilesTask extends AbstractExecutionTask<Long> {
 
 	private static final Logger logger = LoggerFactory.getLogger(CalculateFilesTask.class);
 
@@ -35,77 +35,64 @@ public class CalculateFilesTask extends AbstractExecutionTask<Boolean> {
 
 	private final ThreadPoolExecutor pool;
 	
-	public CalculateFilesTask(final EventManager events,
-			final List<DirItem> sourceDirs, final DirItem targetDir) {
-		this(events, sourceDirs, targetDir, ThreadPoolFactory.getThreadPool(ThreadPoolFactory.CALC_FILES_POOL));
+	public CalculateFilesTask(final List<DirItem> sourceDirs, final DirItem targetDir,
+			final EventManager events) {
+		this(sourceDirs, targetDir, events, ThreadPoolFactory.getThreadPool(ThreadPoolFactory.CALC_FILES_POOL));
 	}
 
-	public CalculateFilesTask(final EventManager events,
-			final List<DirItem> sourceDirs, final DirItem targetDir,
-			final ThreadPoolExecutor pool) {
-		this.events = events;
+	public CalculateFilesTask(final List<DirItem> sourceDirs, final DirItem targetDir,
+			final EventManager events, final ThreadPoolExecutor pool) {
 		this.sourceDirs = sourceDirs;
 		this.targetDir = targetDir;
-
+		this.events = events;
 		this.pool = pool;
 	}
 
 	@Override
-	public List<Future<Boolean>> execute0() throws TaskExecutionException {
-		final List<Future<Boolean>> futures = new LinkedList<>();
+	public List<Future<Long>> execute0() throws TaskExecutionException {
+		final List<Future<Long>> futures = new LinkedList<>();
 
-		futures.add(pool.submit(new CalculateSubtask(targetDir, this.events, this.interrupted), Boolean.TRUE));
+		futures.add(pool.submit(new CalculateSubtask(targetDir)));
 		for (final DirItem item : sourceDirs) {
-			futures.add(pool.submit(new CalculateSubtask(item, this.events, this.interrupted), Boolean.TRUE));
+			futures.add(pool.submit(new CalculateSubtask(item)));
 		}
-
-		this.interrupted.set(true);
 		return futures;
 	}
 
-	private class CalculateSubtask implements Runnable {
+	private class CalculateSubtask implements Callable<Long> {
 
 		private final DirItem dirItem;
 
-		private AtomicBoolean interrupted;
-
-		private EventManager events;
-
-		public CalculateSubtask(final DirItem dirItem,
-				final EventManager events,
-				final AtomicBoolean interrupted) {
+		public CalculateSubtask(final DirItem dirItem) {
 			this.dirItem = dirItem;
-			this.events = events;
-			this.interrupted = interrupted;
 		}
 
 		@Override
-		public void run() {
-			try {
-				logger.info("Calculating files in {}", dirItem);
-				Files.walkFileTree(this.dirItem.getDir().toPath(),
-						Collections.singleton(FileVisitOption.FOLLOW_LINKS),
-						Integer.MAX_VALUE,
-						new OnlyFileVisitor(this.interrupted, new IncrementCounterVisitor(this.events)));
-				logger.info("Finished calculating files in {}", dirItem);
-			} catch (IOException e) {
-				logger.error("Failed to visit tree " + dirItem, e);
-			}
+		public Long call() throws Exception {
+			logger.info("Calculating files in {}", dirItem);
+			final IncrementCounterVisitor visitor = new IncrementCounterVisitor();
+			Files.walkFileTree(this.dirItem.getDir().toPath(),
+					Collections.singleton(FileVisitOption.FOLLOW_LINKS),
+					Integer.MAX_VALUE,
+					new OnlyFileVisitor(interrupted, visitor));
+			logger.info("Finished calculating files in {}", dirItem);
+			return visitor.getCount();
 		}
 
 	}
 
 	private class IncrementCounterVisitor implements VisitSingleFileCommand {
-
-		private EventManager events;
-
-		public IncrementCounterVisitor(EventManager events) {
-			this.events = events;
-		}
+	
+		private long count = 0;
 
 		@Override
 		public void visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-			this.events.publish(CalculateFilesEvent.TOPIC, new CalculateFilesEvent(filesCount.incrementAndGet()));
+			this.count++;
+			events.publish(CalculateFilesEvent.TOPIC, new CalculateFilesEvent(filesCount.incrementAndGet()));
+		}
+
+		public long getCount() {
+			return this.count;
 		}
 
 	}
