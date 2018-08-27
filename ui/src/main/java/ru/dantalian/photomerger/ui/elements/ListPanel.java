@@ -246,9 +246,9 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 			} finally {
 				stopProcess();
 				if (ex == null) {
-					progressBar.setString("Succesfully finished merging " + filesCount + " files");
+					progressBar.setString("Succesfully interrupted merging " + filesCount + " files");
 					progressBar.setValue(100);
-					logger.info("Succesfully finished merging {} files", filesCount);
+					logger.info("Succesfully interrupted merging {} files", filesCount);
 				} else if (!(ex instanceof ChainStoppedException)) {
 					progressBar.setString("Error occured. See logs.");
 					progressBar.setValue(0);

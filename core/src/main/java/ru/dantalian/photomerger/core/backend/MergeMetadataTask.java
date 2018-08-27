@@ -6,12 +6,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -20,12 +20,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ru.dantalian.photomerger.core.ProgressStateManager;
+import ru.dantalian.photomerger.core.AbstractExecutionTask;
+import ru.dantalian.photomerger.core.TaskExecutionException;
+import ru.dantalian.photomerger.core.events.MergeMetadataEvent;
 import ru.dantalian.photomerger.core.model.DirItem;
+import ru.dantalian.photomerger.core.model.EventManager;
 import ru.dantalian.photomerger.core.model.FileItem;
 import ru.dantalian.photomerger.core.utils.FileItemUtils;
 
-public class MergeMetadataTask {
+public class MergeMetadataTask extends AbstractExecutionTask<DirItem> {
 
 	private static final Logger logger = LoggerFactory.getLogger(MergeMetadataTask.class);
 
@@ -35,58 +38,55 @@ public class MergeMetadataTask {
 
 	private final AtomicLong counter = new AtomicLong(0L);
 
-	private final ProgressStateManager progress;
-	
+	private final EventManager events;
+
 	private final DirItem targetDir;
 
-	private volatile long totalCount;
+	private final long totalCount;
 
 	private final AtomicLong filesCount = new AtomicLong(0);
-	
+
 	private final ThreadPoolExecutor pool;
 
-	private final Timer timer = new Timer("merge-metadata-progress", true);
+	private final List<DirItem> metadataFiles;
 
-	public MergeMetadataTask(final ProgressStateManager progress, final DirItem targetDir) {
-		this.progress = progress;
-		this.targetDir = targetDir;
-		this.pool = ThreadPoolFactory.getThreadPool(ThreadPoolFactory.MERGE_META_POOL);
+	public MergeMetadataTask(final EventManager events, final DirItem targetDir,
+			final List<DirItem> metadataFiles) {
+		this(events, targetDir, metadataFiles, ThreadPoolFactory.getThreadPool(ThreadPoolFactory.MERGE_META_POOL));
 	}
 
-	public DirItem mergeMetadata(final List<DirItem> aMetadataFiles)
-			throws InterruptedException, ExecutionException {
-		filesCount.set(0);
+	public MergeMetadataTask(final EventManager events, final DirItem targetDir,
+			final List<DirItem> metadataFiles, final ThreadPoolExecutor pool) {
+		this.events = events;
+		this.targetDir = targetDir;
+		this.metadataFiles = Collections.unmodifiableList(metadataFiles);
+		this.pool = pool;
+
 		// Geometric progression with b1 = size q = 1/2 and n = log2(size)
-		totalCount = (long) (aMetadataFiles.size() * 2 * (1 - Math.pow(0.5,
-				(Math.log(aMetadataFiles.size())/Math.log(2))))) + 1L;
+		totalCount = (long) (metadataFiles.size() * 2 * (1 - Math.pow(0.5,
+				(Math.log(metadataFiles.size()) / Math.log(2))))) + 1L;
+	}
 
-		timer.scheduleAtFixedRate(new TimerTask() {
-
-			@Override
-			public void run() {
-				if (progress.isStarted() && filesCount.get() > 0L) {
-					progress.setProgressText("Merging metadata");
-					final int percent = 33 + (int) (filesCount.get() * 33L / totalCount);
-					progress.setCurrent("" + filesCount.get(), percent);
-					progress.setMax("" + totalCount);
-				}
-			}
-		}, 1000, 1000);
-
-		List<DirItem> metadataFiles = aMetadataFiles;
+	@Override
+	public List<Future<DirItem>> execute0() throws TaskExecutionException {
+		List<DirItem> metadataFiles = new LinkedList<>(this.metadataFiles);
 		while (true) {
 			if (metadataFiles.size() == 1) {
 				final DirItem finalItem = metadataFiles.get(0);
 				logger.info("Complete merged metadata {}", finalItem);
-				return finalItem;
+				return Collections.singletonList(CompletableFuture.completedFuture(finalItem));
 			}
 			final List<MergeCommand> commands = new LinkedList<>();
 
 			final Iterator<DirItem> iterator = metadataFiles.iterator();
 			boolean createEmpty = true;
 			while (iterator.hasNext()) {
+				if (this.interrupted.get()) {
+					Collections.singletonList(CompletableFuture.completedFuture(null));
+				}
 				final DirItem left = iterator.next();
-				filesCount.incrementAndGet();
+				this.events.publish(MergeMetadataEvent.TOPIC, new MergeMetadataEvent(
+						MergeMetadataEvent.newItem(filesCount.incrementAndGet(), totalCount)));
 				if (!iterator.hasNext()) {
 					metadataFiles = new LinkedList<>();
 					metadataFiles.add(left);
@@ -94,23 +94,24 @@ public class MergeMetadataTask {
 					break;
 				}
 				final DirItem right = iterator.next();
-				filesCount.incrementAndGet();
-				
+				this.events.publish(MergeMetadataEvent.TOPIC, new MergeMetadataEvent(
+						MergeMetadataEvent.newItem(filesCount.incrementAndGet(), totalCount)));
+
 				commands.add(new MergeCommand(left, right));
 			}
-			
-			final List<Future<DirItem>> futures = pool.invokeAll(commands);
-			if (createEmpty) {
-				metadataFiles = new LinkedList<>();
-			}
-			for (final Future<DirItem> future: futures) {
-				metadataFiles.add(future.get());
+
+			try {
+				final List<Future<DirItem>> futures = pool.invokeAll(commands);
+				if (createEmpty) {
+					metadataFiles = new LinkedList<>();
+				}
+				for (final Future<DirItem> future : futures) {
+					metadataFiles.add(future.get());
+				}
+			} catch (final InterruptedException | ExecutionException e) {
+				throw new TaskExecutionException("Failed to merge metadata", e);
 			}
 		}
-	}
-
-	public void finish() {
-		timer.cancel();
 	}
 
 	private Path getMetadataPath(final DirItem targetDir) {
@@ -120,14 +121,14 @@ public class MergeMetadataTask {
 			metadataDir.mkdirs();
 		}
 		return metadataDir.toPath()
-			.resolve(METADATA_FILE_NAME + "-" + counter.incrementAndGet());
+				.resolve(METADATA_FILE_NAME + "-" + counter.incrementAndGet());
 	}
 
 	class MergeCommand implements Callable<DirItem> {
-		
+
 		private final DirItem left;
 		private final DirItem right;
-		
+
 		public MergeCommand(final DirItem left, final DirItem right) {
 			this.left = left;
 			this.right = right;
@@ -136,18 +137,18 @@ public class MergeMetadataTask {
 		@Override
 		public DirItem call() throws Exception {
 			final Path mergedPath = getMetadataPath(MergeMetadataTask.this.targetDir);
-			try(BufferedReader leftReader = new BufferedReader(new FileReader(left.getDir()));
-					BufferedReader rightReader = new BufferedReader(new FileReader(right.getDir()));
-					PrintWriter writer = new PrintWriter(new FileWriter(mergedPath.toFile()))) {
+			try (final BufferedReader leftReader = new BufferedReader(new FileReader(left.getDir()));
+					final BufferedReader rightReader = new BufferedReader(new FileReader(right.getDir()));
+					final PrintWriter writer = new PrintWriter(new FileWriter(mergedPath.toFile()))) {
 				final Iterator<String> leftIterator = leftReader.lines().iterator();
 				final Iterator<String> rightIterator = rightReader.lines().iterator();
 				FileItem leftItem = null;
 				FileItem rightItem = null;
-				while(leftIterator.hasNext() || rightIterator.hasNext()) {
-					leftItem = (leftIterator.hasNext() && leftItem == null)
-							? FileItemUtils.createFileItem(leftIterator.next(), false) : leftItem;
-					rightItem = (rightIterator.hasNext() && rightItem == null)
-							? FileItemUtils.createFileItem(rightIterator.next(), false) : rightItem;
+				while (leftIterator.hasNext() || rightIterator.hasNext()) {
+					leftItem = (leftIterator.hasNext() && leftItem == null) ? FileItemUtils
+							.createFileItem(leftIterator.next(), false) : leftItem;
+					rightItem = (rightIterator.hasNext() && rightItem == null) ? FileItemUtils
+							.createFileItem(rightIterator.next(), false) : rightItem;
 					if (leftItem == null && rightItem != null) {
 						writer.println(FileItemUtils.externalize(rightItem));
 						rightItem = null;
@@ -175,7 +176,7 @@ public class MergeMetadataTask {
 			}
 			return new DirItem(mergedPath.toFile());
 		}
-		
+
 	}
 
 }

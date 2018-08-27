@@ -13,22 +13,24 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ru.dantalian.photomerger.core.ProgressStateManager;
+import ru.dantalian.photomerger.core.AbstractExecutionTask;
+import ru.dantalian.photomerger.core.TaskExecutionException;
+import ru.dantalian.photomerger.core.events.StoreMetadataEvent;
 import ru.dantalian.photomerger.core.model.DirItem;
+import ru.dantalian.photomerger.core.model.EventManager;
 import ru.dantalian.photomerger.core.model.FileItem;
 import ru.dantalian.photomerger.core.utils.FileItemUtils;
 
-public class StoreMetadataTask {
+public class StoreMetadataTask extends AbstractExecutionTask<List<DirItem>> {
 
 	private static final Logger logger = LoggerFactory.getLogger(StoreMetadataTask.class);
 
@@ -38,9 +40,10 @@ public class StoreMetadataTask {
 
 	private static final int LIMIT = 1000;
 
-	private final AtomicLong counter = new AtomicLong(0L);
+	private final EventManager events;
 
-	private final ProgressStateManager progress;
+	private final List<DirItem> sourceDirs;
+	private final DirItem targetDir;
 
 	private final long totalCount;
 
@@ -48,43 +51,32 @@ public class StoreMetadataTask {
 
 	private final ThreadPoolExecutor pool;
 
-	private final Timer timer = new Timer("store-metadata-progress", true);
-
-	public StoreMetadataTask(final ProgressStateManager progress, final long totalCount) {
-		this.progress = progress;
-		this.totalCount = totalCount;
-		this.pool = ThreadPoolFactory.getThreadPool(ThreadPoolFactory.STORE_META_POOL);
+	private final AtomicLong counter = new AtomicLong(0L);
+	
+	public StoreMetadataTask(final List<DirItem> sourceDirs, final DirItem targetDir,
+			final EventManager events, final long totalCount) {
+		this(sourceDirs, targetDir, totalCount, events,
+				ThreadPoolFactory.getThreadPool(ThreadPoolFactory.STORE_META_POOL));
 	}
 
-	public List<Future<List<DirItem>>> storeMetadata(final List<DirItem> sourceDirs, final DirItem targetDir)
-			throws InterruptedException {
-		filesCount.set(0);
+	public StoreMetadataTask(final List<DirItem> sourceDirs, final DirItem targetDir,
+			final long totalCount, final EventManager events, final ThreadPoolExecutor pool) {
+		this.sourceDirs = sourceDirs;
+		this.targetDir = targetDir;
+		this.totalCount = totalCount;
+		this.events = events;
+		this.pool = pool;
+	}
 
-		timer.scheduleAtFixedRate(new TimerTask() {
-
-			@Override
-			public void run() {
-				if (progress.isStarted() && filesCount.get() > 0L) {
-					progress.setProgressText("Storing metadata");
-					final int percent = (int) (filesCount.get() * 33L / totalCount);
-					progress.setCurrent("" + filesCount.get(), percent);
-					progress.setMax("" + totalCount);
-				}
-			}
-		}, 1000, 1000);
-
+	public List<Future<List<DirItem>>> execute0() throws TaskExecutionException {
 		final List<Future<List<DirItem>>> futures = new LinkedList<>();
 
-		futures.add(pool.submit(new StoreMetadataCommand(targetDir, targetDir)));
+		futures.add(pool.submit(new StoreMetadataCommand(targetDir, targetDir, this.interrupted)));
 		for (final DirItem item: sourceDirs) {
-			futures.add(pool.submit(new StoreMetadataCommand(item, targetDir)));
+			futures.add(pool.submit(new StoreMetadataCommand(item, targetDir, this.interrupted)));
 		}
 
 		return futures;
-	}
-
-	public void finish() {
-		timer.cancel();
 	}
 
 	private Path getMetadataPath(final DirItem targetDir) {
@@ -103,9 +95,13 @@ public class StoreMetadataTask {
 
 		private final DirItem targetDir;
 
-		public StoreMetadataCommand(final DirItem sourceDir, final DirItem targetDir) {
+		private AtomicBoolean interrupted;
+
+		public StoreMetadataCommand(final DirItem sourceDir, final DirItem targetDir,
+				final AtomicBoolean interrupted) {
 			this.sourceDir = sourceDir;
 			this.targetDir = targetDir;
+			this.interrupted = interrupted;
 		}
 
 		@Override
@@ -116,7 +112,7 @@ public class StoreMetadataTask {
 				Files.walkFileTree(this.sourceDir.getDir().toPath(),
 						Collections.singleton(FileVisitOption.FOLLOW_LINKS),
 						Integer.MAX_VALUE,
-						new OnlyFileVisitor(progress, command));
+						new OnlyFileVisitor(this.interrupted, command));
 			}
 			return metadataFiles;
 		}
@@ -145,7 +141,8 @@ public class StoreMetadataTask {
 			}
 			final FileItem fileItem = FileItemUtils.createFileItem(sourceDir.getDir(), file.toFile(), false);
 			queue.add(fileItem);
-			filesCount.incrementAndGet();
+			events.publish(StoreMetadataEvent.TOPIC, new StoreMetadataEvent(
+					StoreMetadataEvent.newItem(filesCount.incrementAndGet(), totalCount)));
 		}
 
 		@Override

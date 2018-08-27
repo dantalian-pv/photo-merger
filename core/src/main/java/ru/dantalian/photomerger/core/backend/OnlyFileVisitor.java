@@ -5,23 +5,23 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-
-import ru.dantalian.photomerger.core.ProgressStateManager;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OnlyFileVisitor implements FileVisitor<Path> {
 
-	private final ProgressStateManager progress;
+	private final AtomicBoolean interrupted;
 
 	private final VisitSingleFileCommand command;
 
-	public OnlyFileVisitor(final ProgressStateManager progress, final VisitSingleFileCommand command) {
-		this.progress = progress;
+	public OnlyFileVisitor(final AtomicBoolean interrupted,
+			final VisitSingleFileCommand command) {
+		this.interrupted = interrupted;
 		this.command = command;
 	}
 
 	@Override
 	public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-		if (!progress.isStarted()) {
+		if (this.interrupted.get()) {
 			return FileVisitResult.TERMINATE;
 		}
 		if (dir.toFile().isHidden()) {
@@ -32,7 +32,7 @@ public class OnlyFileVisitor implements FileVisitor<Path> {
 
 	@Override
 	public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-		if (!progress.isStarted()) {
+		if (this.interrupted.get()) {
 			return FileVisitResult.TERMINATE;
 		}
 		if (!file.toFile().isHidden() && attrs.isRegularFile()) {
@@ -43,7 +43,7 @@ public class OnlyFileVisitor implements FileVisitor<Path> {
 
 	@Override
 	public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-		if (!progress.isStarted()) {
+		if (this.interrupted.get()) {
 			return FileVisitResult.TERMINATE;
 		}
 		return FileVisitResult.CONTINUE;
@@ -51,7 +51,7 @@ public class OnlyFileVisitor implements FileVisitor<Path> {
 
 	@Override
 	public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-		if (!progress.isStarted()) {
+		if (this.interrupted.get()) {
 			return FileVisitResult.TERMINATE;
 		}
 		return FileVisitResult.CONTINUE;
