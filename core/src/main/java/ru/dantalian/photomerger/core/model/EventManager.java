@@ -1,11 +1,13 @@
 package ru.dantalian.photomerger.core.model;
 
 public interface EventManager {
+	
+	<I> void publish(TaskEvent<I> event);
 
-	<T> void publish(String topic, T item);
+	<I> void publish(String topic, TaskEvent<I> event);
 
-	<T> void subscribe(String topic, EventListener<T> listener);
+	<I> void subscribe(String topic, EventListener<? extends TaskEvent<I>> listener);
 
-	<T> void unsubscribe(String topic, Class<T> listenerClass);
+	<I> void unsubscribe(String topic, Class<EventListener<I>> listenerClass);
 
 }

@@ -88,7 +88,7 @@ public class CalculateFilesTask extends AbstractExecutionTask<Long> {
 		@Override
 		public void visitFile(Path file, BasicFileAttributes attrs) throws IOException {
 			this.count++;
-			events.publish(CalculateFilesEvent.TOPIC, new CalculateFilesEvent(filesCount.incrementAndGet()));
+			events.publish(new CalculateFilesEvent(filesCount.incrementAndGet()));
 		}
 
 		public long getCount() {

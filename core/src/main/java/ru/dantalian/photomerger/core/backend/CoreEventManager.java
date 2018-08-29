@@ -8,6 +8,7 @@ import java.util.Map;
 
 import ru.dantalian.photomerger.core.model.EventListener;
 import ru.dantalian.photomerger.core.model.EventManager;
+import ru.dantalian.photomerger.core.model.TaskEvent;
 
 public class CoreEventManager implements EventManager {
 
@@ -16,11 +17,16 @@ public class CoreEventManager implements EventManager {
 	public CoreEventManager() {
 		this.listeners = new HashMap<>();
 	}
+	
+	@Override
+	public <I> void publish(TaskEvent<I> event) {
+		publish(event.getTopic(), event);
+	}
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> void publish(final String topic, final T item) {
-		if (topic == null || item == null) {
+	public <I> void publish(final String topic, final TaskEvent<I> event) {
+		if (topic == null || event == null) {
 			throw new NullPointerException();
 		}
 		final List<EventListener<?>> list = this.listeners.get(topic);
@@ -28,12 +34,12 @@ public class CoreEventManager implements EventManager {
 			return;
 		}
 		for (final EventListener<?> listener: list) {
-			((EventListener<T>) listener).handle(item);
+			((EventListener<TaskEvent<I>>) listener).handle(event);
 		}
 	}
 
 	@Override
-	public <T> void subscribe(final String topic, final EventListener<T> listener) {
+	public <I> void subscribe(final String topic, final EventListener<? extends TaskEvent<I>> listener) {
 		if (topic == null || listener == null) {
 			throw new NullPointerException();
 		}
@@ -48,7 +54,7 @@ public class CoreEventManager implements EventManager {
 	}
 	
 	@Override
-	public <T> void unsubscribe(String topic, Class<T> listenerClass) {
+	public <I> void unsubscribe(String topic, Class<EventListener<I>> listenerClass) {
 		synchronized (listeners) {
 			List<EventListener<?>> list = this.listeners.get(topic);
 			if (list == null) {

@@ -27,9 +27,17 @@ import ru.dantalian.photomerger.core.backend.EventManagerFactory;
 import ru.dantalian.photomerger.core.backend.MergeFilesTask;
 import ru.dantalian.photomerger.core.backend.MergeMetadataTask;
 import ru.dantalian.photomerger.core.backend.StoreMetadataTask;
+import ru.dantalian.photomerger.core.events.CalculateFilesEvent;
+import ru.dantalian.photomerger.core.events.MergeFilesEvent;
+import ru.dantalian.photomerger.core.events.MergeMetadataEvent;
+import ru.dantalian.photomerger.core.events.StoreMetadataEvent;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
 import ru.dantalian.photomerger.ui.ProgressStateManager;
+import ru.dantalian.photomerger.ui.events.CalculateFilesListener;
+import ru.dantalian.photomerger.ui.events.MergeFilesListener;
+import ru.dantalian.photomerger.ui.events.MergeMetadataListener;
+import ru.dantalian.photomerger.ui.events.StoreMetadataListener;
 
 public class ListPanel extends JPanel implements ProgressStateManager {
 
@@ -102,7 +110,20 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 		add(checkBoxPane, BorderLayout.PAGE_START);
 		add(listScrollPane, BorderLayout.CENTER);
 		add(buttonPane, BorderLayout.PAGE_END);
-		
+
+		initProgressTimer();
+		initListeners();
+	}
+
+	private void initListeners() {
+		final EventManager events = EventManagerFactory.getInstance();
+		events.subscribe(CalculateFilesEvent.TOPIC, new CalculateFilesListener(this));
+		events.subscribe(StoreMetadataEvent.TOPIC, new StoreMetadataListener(this));
+		events.subscribe(MergeMetadataEvent.TOPIC, new MergeMetadataListener(this));
+		events.subscribe(MergeFilesEvent.TOPIC, new MergeFilesListener(this));
+	}
+
+	private void initProgressTimer() {
 		this.timer.scheduleAtFixedRate(new TimerTask() {
 			
 			@Override
@@ -113,7 +134,7 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 						str += progressText;
 					}
 					if (!progressCur.isEmpty()) {
-						str += ": for " + progressCur;
+						str += ": " + progressCur;
 					}
 					if (!progressMax.isEmpty()) {
 						str += " of " + progressMax;
@@ -122,7 +143,6 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 				}
 			}
 		}, 1000, 1000);
-		
 	}
 	
 	private DirItem targetDir;
@@ -155,8 +175,12 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 	@Override
 	public void setCurrent(String aCurrent, int aPercent) {
 		this.progressCur = aCurrent;
-		this.progressBar.setIndeterminate(false);
-		this.progressBar.setValue(aPercent);
+		if (aPercent >= 0) {
+			this.progressBar.setIndeterminate(false);
+			this.progressBar.setValue(aPercent);
+		} else {
+			this.progressBar.setIndeterminate(true);
+		}
 	}
 
 	@Override

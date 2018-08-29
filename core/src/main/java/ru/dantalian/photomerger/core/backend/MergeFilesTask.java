@@ -100,8 +100,7 @@ public class MergeFilesTask extends AbstractExecutionTask<Boolean> {
 									copyMoveFile(list.get(0), copy, keepPath);
 								} else {
 									logger.info("Found duplicate {} and {}", list.get(0), list.get(i));
-									this.events.publish(MergeFilesEvent.TOPIC,
-											MergeFilesEvent.newItem(this.filesCount.incrementAndGet(), totalCount));
+									this.events.publish(new MergeFilesEvent(this.filesCount.incrementAndGet(), totalCount));
 								}
 							}
 						}
@@ -177,8 +176,7 @@ public class MergeFilesTask extends AbstractExecutionTask<Boolean> {
 		} else {
 			Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
 		}
-		this.events.publish(MergeFilesEvent.TOPIC,
-				MergeFilesEvent.newItem(this.filesCount.incrementAndGet(), totalCount));
+		this.events.publish(new MergeFilesEvent(this.filesCount.incrementAndGet(), totalCount));
 	}
 
 }

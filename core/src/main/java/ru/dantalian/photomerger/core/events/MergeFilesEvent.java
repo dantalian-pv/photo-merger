@@ -1,42 +1,25 @@
 package ru.dantalian.photomerger.core.events;
 
-import ru.dantalian.photomerger.core.events.MergeFilesEvent.MergeFilesItem;
 import ru.dantalian.photomerger.core.model.TaskEvent;
 
-public class MergeFilesEvent extends TaskEvent<MergeFilesItem> {
+public class MergeFilesEvent extends TaskEvent<ProgressEventItem> {
 
 	public static final String TOPIC = "merge-files";
 
-	public MergeFilesEvent(final MergeFilesItem item) {
+	public MergeFilesEvent(final ProgressEventItem item) {
 		this(TOPIC, item);
 	}
 
-	public static MergeFilesItem newItem(final long current, final long total) {
-		return new MergeFilesItem(current, total);
-	}
-
-	public MergeFilesEvent(final String topic, final MergeFilesItem item) {
-		super(topic, item);
+	public MergeFilesEvent(final long current, final long total) {
+		this(TOPIC, current, total);
 	}
 	
-	public static class MergeFilesItem {
+	public MergeFilesEvent(final String topic, final long current, final long total) {
+		this(topic, new ProgressEventItem(current, total));
+	}
 
-		private final long current;
-		private final long total;
-
-		public MergeFilesItem(final long current, final long total) {
-			this.current = current;
-			this.total = total;
-		}
-
-		public long getCurrent() {
-			return current;
-		}
-
-		public long getTotal() {
-			return total;
-		}
-
+	public MergeFilesEvent(final String topic, final ProgressEventItem item) {
+		super(topic, item);
 	}
 
 }
