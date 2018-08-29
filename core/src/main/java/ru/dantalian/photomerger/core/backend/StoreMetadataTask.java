@@ -141,8 +141,7 @@ public class StoreMetadataTask extends AbstractExecutionTask<List<DirItem>> {
 			}
 			final FileItem fileItem = FileItemUtils.createFileItem(sourceDir.getDir(), file.toFile(), false);
 			queue.add(fileItem);
-			events.publish(StoreMetadataEvent.TOPIC, new StoreMetadataEvent(
-					StoreMetadataEvent.newItem(filesCount.incrementAndGet(), totalCount)));
+			events.publish(new StoreMetadataEvent(filesCount.incrementAndGet(), totalCount));
 		}
 
 		@Override

@@ -1,42 +1,25 @@
 package ru.dantalian.photomerger.core.events;
 
-import ru.dantalian.photomerger.core.events.MergeMetadataEvent.MergeMetadataItem;
 import ru.dantalian.photomerger.core.model.TaskEvent;
 
-public class MergeMetadataEvent extends TaskEvent<MergeMetadataItem> {
+public class MergeMetadataEvent extends TaskEvent<ProgressEventItem> {
 
 	public static final String TOPIC = "merge-metadata";
 
-	public MergeMetadataEvent(final MergeMetadataItem item) {
+	public MergeMetadataEvent(final ProgressEventItem item) {
 		this(TOPIC, item);
 	}
-
-	public static MergeMetadataItem newItem(final long current, final long total) {
-		return new MergeMetadataItem(current, total);
-	}
-
-	public MergeMetadataEvent(final String topic, final MergeMetadataItem item) {
-		super(topic, item);
+	
+	public MergeMetadataEvent(final long current, final long total) {
+		this(TOPIC, current, total);
 	}
 	
-	public static class MergeMetadataItem {
+	public MergeMetadataEvent(final String topic, final long current, final long total) {
+		this(topic, new ProgressEventItem(current, total));
+	}
 
-		private final long current;
-		private final long total;
-
-		public MergeMetadataItem(final long current, final long total) {
-			this.current = current;
-			this.total = total;
-		}
-
-		public long getCurrent() {
-			return current;
-		}
-
-		public long getTotal() {
-			return total;
-		}
-
+	public MergeMetadataEvent(final String topic, final ProgressEventItem item) {
+		super(topic, item);
 	}
 
 }

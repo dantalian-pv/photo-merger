@@ -85,8 +85,7 @@ public class MergeMetadataTask extends AbstractExecutionTask<DirItem> {
 					Collections.singletonList(CompletableFuture.completedFuture(null));
 				}
 				final DirItem left = iterator.next();
-				this.events.publish(MergeMetadataEvent.TOPIC, new MergeMetadataEvent(
-						MergeMetadataEvent.newItem(filesCount.incrementAndGet(), totalCount)));
+				this.events.publish(new MergeMetadataEvent(filesCount.incrementAndGet(), totalCount));
 				if (!iterator.hasNext()) {
 					metadataFiles = new LinkedList<>();
 					metadataFiles.add(left);
@@ -94,8 +93,7 @@ public class MergeMetadataTask extends AbstractExecutionTask<DirItem> {
 					break;
 				}
 				final DirItem right = iterator.next();
-				this.events.publish(MergeMetadataEvent.TOPIC, new MergeMetadataEvent(
-						MergeMetadataEvent.newItem(filesCount.incrementAndGet(), totalCount)));
+				this.events.publish(new MergeMetadataEvent(filesCount.incrementAndGet(), totalCount));
 
 				commands.add(new MergeCommand(left, right));
 			}
