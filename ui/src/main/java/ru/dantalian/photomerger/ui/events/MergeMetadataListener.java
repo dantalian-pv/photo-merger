@@ -1,23 +1,13 @@
 package ru.dantalian.photomerger.ui.events;
 
-import ru.dantalian.photomerger.core.events.MergeMetadataEvent;
-import ru.dantalian.photomerger.core.model.EventListener;
+import ru.dantalian.photomerger.core.events.MergeFilesEvent;
+import ru.dantalian.photomerger.ui.ProgressCalculator;
 import ru.dantalian.photomerger.ui.ProgressStateManager;
 
-public class MergeMetadataListener implements EventListener<MergeMetadataEvent> {
+public class MergeMetadataListener extends AbstractProgressEventListener<MergeFilesEvent> {
 
-	private final ProgressStateManager progressManager;
-
-	public MergeMetadataListener(final ProgressStateManager progressManager) {
-		this.progressManager = progressManager;
-	}
-
-	@Override
-	public void handle(final MergeMetadataEvent event) {
-		this.progressManager.setProgressText("Merging metadata");
-		this.progressManager.setCurrent("" + event.getItem().getCurrent(),
-				(int) (event.getItem().getCurrent() / event.getItem().getTotal() * 100));
-		this.progressManager.setMax("" + event.getItem().getTotal());
+	public MergeMetadataListener(ProgressStateManager progressManager, ProgressCalculator calculator) {
+		super(progressManager, calculator, "Merging metadata");
 	}
 
 }

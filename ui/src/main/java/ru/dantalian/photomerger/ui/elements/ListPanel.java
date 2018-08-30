@@ -33,6 +33,7 @@ import ru.dantalian.photomerger.core.events.MergeMetadataEvent;
 import ru.dantalian.photomerger.core.events.StoreMetadataEvent;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
+import ru.dantalian.photomerger.ui.ProgressCalculator;
 import ru.dantalian.photomerger.ui.ProgressStateManager;
 import ru.dantalian.photomerger.ui.events.CalculateFilesListener;
 import ru.dantalian.photomerger.ui.events.MergeFilesListener;
@@ -118,9 +119,27 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 	private void initListeners() {
 		final EventManager events = EventManagerFactory.getInstance();
 		events.subscribe(CalculateFilesEvent.TOPIC, new CalculateFilesListener(this));
-		events.subscribe(StoreMetadataEvent.TOPIC, new StoreMetadataListener(this));
-		events.subscribe(MergeMetadataEvent.TOPIC, new MergeMetadataListener(this));
-		events.subscribe(MergeFilesEvent.TOPIC, new MergeFilesListener(this));
+		events.subscribe(StoreMetadataEvent.TOPIC, new StoreMetadataListener(this, new ProgressCalculator() {
+			
+			@Override
+			public int calculate(final long current, final long total) {
+				return (int) (current / total * 33);
+			}
+		}));
+		events.subscribe(MergeMetadataEvent.TOPIC, new MergeMetadataListener(this, new ProgressCalculator() {
+			
+			@Override
+			public int calculate(final long current, final long total) {
+				return (int) (current / total * 33 + 33);
+			}
+		}));
+		events.subscribe(MergeFilesEvent.TOPIC, new MergeFilesListener(this, new ProgressCalculator() {
+			
+			@Override
+			public int calculate(final long current, final long total) {
+				return (int) (current / total * 33 + 66);
+			}
+		}));
 	}
 
 	private void initProgressTimer() {
@@ -277,9 +296,9 @@ public class ListPanel extends JPanel implements ProgressStateManager {
 			} finally {
 				stopProcess();
 				if (ex == null) {
-					progressBar.setString("Succesfully interrupted merging " + filesCount + " files");
+					progressBar.setString("Succesfully finished merging " + filesCount + " files");
 					progressBar.setValue(100);
-					logger.info("Succesfully interrupted merging {} files", filesCount);
+					logger.info("Succesfully finished merging {} files", filesCount);
 				} else if (!(ex instanceof ChainStoppedException)) {
 					progressBar.setString("Error occured. See logs.");
 					progressBar.setValue(0);

@@ -48,7 +48,7 @@ public class SelectTargetDir extends JButton implements ActionListener {
 		} else {
 			if (listModel.isEmpty()) {
 				JOptionPane.showMessageDialog(this.getRoot(),
-						"No source dir is selected. Add at lest one source dir.",
+						"No source dir is selected. Add at least one source dir.",
 						"Error",
 						JOptionPane.ERROR_MESSAGE);
 				return;
