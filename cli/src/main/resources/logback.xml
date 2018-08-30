@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			   xsi:noNamespaceSchemaLocation="logback_0.9.30.xsd">
+
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{dd.MM.yyyy HH:mm:ss.SSS} %-5p [%thread] %c{1}: %M - %m - [%F, line %L]%n</pattern>
+			<charset>utf-8</charset>
+		</encoder>
+	</appender>
+
+ 	<logger name="ru.dantalian.photomerger" level="error"/> 
+
+	<root level="error">
+		<appender-ref ref="console"/>
+	</root>
+</configuration>

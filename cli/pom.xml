@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>ru.dantalian.photomerger</groupId>
 		<artifactId>photo-merger-parent</artifactId>
-		<version>0.0.1</version>
+		<version>0.1.1</version>
 	</parent>
 
 	<artifactId>photo-merger-cli</artifactId>
@@ -15,6 +15,20 @@
 	<name>photo-merger: Client</name>
 
 	<dependencies>
+		<dependency>
+			<groupId>ru.dantalian.photomerger</groupId>
+			<artifactId>photo-merger-core</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>info.picocli</groupId>
+			<artifactId>picocli</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>me.tongfei</groupId>
+			<artifactId>progressbar</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
@@ -45,6 +59,16 @@
 		<plugins>
 			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>ru.dantalian.photomerger.cli.PhotoMergerMain</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

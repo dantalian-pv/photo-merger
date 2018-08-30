@@ -5,7 +5,7 @@
 
 	<groupId>ru.dantalian.photomerger</groupId>
 	<artifactId>photo-merger-parent</artifactId>
-	<version>0.0.1</version>
+	<version>0.1.1</version>
 	<packaging>pom</packaging>
 
 	<name>photo-merger: Parent</name>
@@ -20,6 +20,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+
+		<progressbar-version>0.7.1</progressbar-version>
+		<picocli-version>3.5.2</picocli-version>
 
 		<logback-version>1.2.3</logback-version>
 		<slf4j-version>1.7.25</slf4j-version>
@@ -36,6 +39,17 @@
 				<groupId>ru.dantalian.photomerger</groupId>
 				<artifactId>photo-merger-core</artifactId>
 				<version>${project.version}</version>
+			</dependency>
+
+			<dependency>
+	<groupId>info.picocli</groupId>
+	<artifactId>picocli</artifactId>
+	<version>${picocli-version}</version>
+</dependency>
+			<dependency>
+				<groupId>me.tongfei</groupId>
+				<artifactId>progressbar</artifactId>
+				<version>${progressbar-version}</version>
 			</dependency>
 
 			<dependency>
