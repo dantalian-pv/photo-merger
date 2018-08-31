@@ -11,8 +11,8 @@ public class OffsetProgressCalculator implements ProgressCalculator {
 	}
 
 	@Override
-	public int calculate(long current, long total) {
-		return (int) (current / total * 33 + offset);
+	public int calculate(final long current, final long total) {
+		return (int) (1.0d * current / (1.0d * total) * 33.0 + offset);
 	}
 
 }

@@ -25,10 +25,8 @@ public abstract class AbstractProgressEventListener<T extends TaskEvent<Progress
 	@Override
 	public void handle(final T event) {
 		final ProgressEventItem item = event.getItem();
-		this.progressManager.setProgressText(this.progressText);
-		this.progressManager.setCurrent("for " + item.getCurrent(),
+		this.progressManager.setProgress(this.progressText + ": for " + item.getCurrent() + " of " + item.getTotal(),
 				this.calculator.calculate(item.getCurrent(), item.getTotal()));
-		this.progressManager.setMax("" + item.getTotal());
 	}
 
 }

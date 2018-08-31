@@ -14,9 +14,7 @@ public class CalculateFilesListener implements EventListener<CalculateFilesEvent
 
 	@Override
 	public void handle(final CalculateFilesEvent item) {
-		this.progressManager.setProgressText("Found files");
-		this.progressManager.setCurrent(item.getItem().toString(), -1);
-		this.progressManager.setMax("");
+		this.progressManager.setProgress("Found files: " + item.getItem().toString(), -1);
 	}
 
 }

@@ -6,7 +6,7 @@ import ru.dantalian.photomerger.core.events.MergeFilesEvent;
 public class StoreMetadataListener extends AbstractProgressEventListener<MergeFilesEvent> {
 
 	public StoreMetadataListener(final ProgressBar progressBar) {
-		super(progressBar, "String metadata");
+		super(progressBar, "Storing metadata");
 	}
 
 }

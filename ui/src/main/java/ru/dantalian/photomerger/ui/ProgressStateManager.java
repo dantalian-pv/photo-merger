@@ -1,21 +1,13 @@
 package ru.dantalian.photomerger.ui;
 
-import ru.dantalian.photomerger.core.model.DirItem;
-
 public interface ProgressStateManager {
 
-	void startProcess(DirItem targetDir);
-
-	void stopProcess();
+	void startProcess();
 
 	boolean isStarted();
 
-	void setStarted(boolean started);
+	void setProgress(String aText, int aPercent);
 
-	void setProgressText(String aText);
-
-	void setCurrent(String aCurrent, int aPercent);
-
-	void setMax(String aMax);
+	void stopProcess(String text, int percent);
 
 }

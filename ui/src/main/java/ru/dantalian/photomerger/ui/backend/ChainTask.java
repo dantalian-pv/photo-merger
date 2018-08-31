@@ -18,7 +18,6 @@ import ru.dantalian.photomerger.core.backend.StoreMetadataTask;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
 import ru.dantalian.photomerger.ui.ProgressStateManager;
-import ru.dantalian.photomerger.ui.events.ProgressBarEvent;
 
 public final class ChainTask extends TimerTask {
 
@@ -96,15 +95,13 @@ public final class ChainTask extends TimerTask {
 			logger.error("Executin chain failed", e);
 			ex = e;
 		} finally {
-			this.progress.stopProcess();
 			if (ex == null) {
-				EventManagerFactory.getInstance().publish(
-						new ProgressBarEvent("Succesfully finished merging " + filesCount + " files", 100));
+				this.progress.stopProcess("Succesfully finished merging " + filesCount + " files", 100);
 				logger.info("Succesfully finished merging {} files", filesCount);
 			} else if (!(ex instanceof ChainStoppedException)) {
-				EventManagerFactory.getInstance().publish(
-						new ProgressBarEvent("Error occured. See logs.", 0));
+				this.progress.stopProcess("Error occured. See logs.", 0);
 			}
+			
 		}
 	}
 

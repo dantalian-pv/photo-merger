@@ -7,7 +7,7 @@ import ru.dantalian.photomerger.ui.ProgressStateManager;
 public class StoreMetadataListener extends AbstractProgressEventListener<MergeFilesEvent> {
 
 	public StoreMetadataListener(ProgressStateManager progressManager, ProgressCalculator calculator) {
-		super(progressManager, calculator, "String metadata");
+		super(progressManager, calculator, "Storing metadata");
 	}
 
 }

@@ -11,40 +11,37 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ru.dantalian.photomerger.core.model.DirItem;
-import ru.dantalian.photomerger.ui.ProgressStateManager;
+import ru.dantalian.photomerger.ui.backend.TaskTrigger;
 
 public class SelectTargetDir extends JButton implements ActionListener {
 
 	private static final long serialVersionUID = 4441106526135161132L;
 
-	private static final Logger logger = LoggerFactory.getLogger(SelectTargetDir.class);
-
 	private final DefaultListModel<DirItem> listModel;
 
-	private final ProgressStateManager progressStateManager;
+	private final TaskTrigger trigger;
 
 	private JFileChooser fc;
 
 	public SelectTargetDir(final String text,
 			final DefaultListModel<DirItem> listModel,
-			final ProgressStateManager progressStateManager) {
+			final TaskTrigger trigger) {
 		super(text);
+		this.listModel = listModel;
+		this.trigger = trigger;
+
 		super.setActionCommand(text);
 		super.addActionListener(this);
-		this.listModel = listModel;
-		this.progressStateManager = progressStateManager;
+
 		this.fc = new JFileChooser();
 		this.fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 	}
 
 	@Override
 	public void actionPerformed(final ActionEvent e) {
-		if (this.progressStateManager.isStarted()) {
-			this.progressStateManager.stopProcess();
+		if (this.trigger.isStarted()) {
+			this.trigger.startStop(false, null);
 		} else {
 			if (listModel.isEmpty()) {
 				JOptionPane.showMessageDialog(this.getRoot(),
@@ -73,7 +70,7 @@ public class SelectTargetDir extends JButton implements ActionListener {
 					if (err) {
 						continue;
 					}
-					this.progressStateManager.startProcess(new DirItem(new File(dir)));
+					this.trigger.startStop(true, new DirItem(new File(dir)));
 					return;
 				} else {
 					return;

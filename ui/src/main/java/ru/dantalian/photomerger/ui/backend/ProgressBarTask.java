@@ -2,52 +2,40 @@ package ru.dantalian.photomerger.ui.backend;
 
 import java.util.TimerTask;
 
-import javax.swing.JProgressBar;
-
-import ru.dantalian.photomerger.core.model.DirItem;
+import ru.dantalian.photomerger.core.model.EventManager;
 import ru.dantalian.photomerger.ui.ProgressStateManager;
+import ru.dantalian.photomerger.ui.events.ProgressBarEvent;
 
 public class ProgressBarTask extends TimerTask implements ProgressStateManager {
 
-	private final JProgressBar progressBar;
-	private final TaskTrigger trigger;
+	private final EventManager events;
 
 	private volatile boolean started;
 
-	private volatile String progressText = "";
-	private volatile String progressCur = "";
-	private volatile String progressMax = "";
+	private volatile String progressText;
+	private volatile int percent;
 
-	public ProgressBarTask(final TaskTrigger trigger, JProgressBar progressBar) {
-		this.trigger = trigger;
-		this.progressBar = progressBar;
+	public ProgressBarTask(final EventManager events) {
+		this.events = events;
 	}
 
 	@Override
 	public void run() {
-		if (started) {
-			String str = "";
-			if (!progressText.isEmpty()) {
-				str += progressText;
-			}
-			if (!progressCur.isEmpty()) {
-				str += ": " + progressCur;
-			}
-			if (!progressMax.isEmpty()) {
-				str += " of " + progressMax;
-			}
-			progressBar.setString(str);
+		if (this.started) {
+			final String str = progressText != null && !progressText.isEmpty() ? progressText : "";
+			this.events.publish(new ProgressBarEvent(str, percent));
 		}
 	}
 
 	@Override
-	public void startProcess(DirItem targetDir) {
-		this.trigger.startStop(true, targetDir);
+	public void startProcess() {
+		this.started = true;
 	}
 
 	@Override
-	public void stopProcess() {
-		this.trigger.startStop(false, null);
+	public void stopProcess(final String text, final int percent) {
+		this.started = false;
+		this.events.publish(new ProgressBarEvent(text, percent));
 	}
 
 	@Override
@@ -55,29 +43,10 @@ public class ProgressBarTask extends TimerTask implements ProgressStateManager {
 		return this.started;
 	}
 
-	public void setStarted(final boolean started) {
-		this.started = started;
-	}
-
 	@Override
-	public void setProgressText(String aText) {
-		this.progressText = aText;
-	}
-
-	@Override
-	public void setCurrent(String aCurrent, int aPercent) {
-		this.progressCur = aCurrent;
-		if (aPercent >= 0) {
-			this.progressBar.setIndeterminate(false);
-			this.progressBar.setValue(aPercent);
-		} else {
-			this.progressBar.setIndeterminate(true);
-		}
-	}
-
-	@Override
-	public void setMax(final String aMax) {
-		this.progressMax = aMax;
+	public void setProgress(final String text, final int percent) {
+		this.progressText = text;
+		this.percent = percent;
 	}
 
 }

@@ -70,14 +70,14 @@ public class ListPanel extends JPanel implements TaskTrigger {
 		this.openButton = new SelectSourceDir(InterfaceStrings.ADD, listModel);
 
 		this.progressBar = new JProgressBar(0, 100);
-		this.progressBar.setValue(0);
 		this.progressBar.setString("<- Add source directories and then select a target ->");
 		this.progressBar.setStringPainted(true);
 
-		this.progressTask = new ProgressBarTask(this, this.progressBar);
-		this.timer.scheduleAtFixedRate(this.progressTask, 1000, 1000);
+		this.progressTask = new ProgressBarTask(EventManagerFactory.getInstance());
+		this.timer.scheduleAtFixedRate(this.progressTask, 0, 1000);
+		this.progressTask.setProgress(this.progressBar.getString(), 0);
 
-		this.startButton = new SelectTargetDir(InterfaceStrings.START, listModel, this.progressTask);
+		this.startButton = new SelectTargetDir(InterfaceStrings.START, listModel, this);
 
 		final JPanel buttonPane = new JPanel();
 		buttonPane.setLayout(new BorderLayout(5, 5));
@@ -114,22 +114,20 @@ public class ListPanel extends JPanel implements TaskTrigger {
 	public void startStop(final boolean start, final DirItem targetDir) {
 		if (start) {
 			// Start long run calculations
-			this.progressTask.setCurrent("", -1);
-			this.progressTask.setProgressText(InterfaceStrings.CALCULATING_AMOUNT_OF_WORK);
+			this.progressTask.startProcess();
+			this.progressTask.setProgress(InterfaceStrings.CALCULATING_AMOUNT_OF_WORK, -1);
 			runChain(targetDir);
 		} else {
 			// Stop all background threads
 			// Reset progress bar
-			this.progressTask.setProgressText("Process aborted. Run again");
-			this.progressTask.setCurrent("", 0);
-			this.progressTask.setMax("");
+			this.progressTask.stopProcess("Process aborted. Run again", 0);
 		}
-		this.progressTask.setStarted(start);
-		this.startButton.setText((start) ? InterfaceStrings.STOP : InterfaceStrings.START);
-		this.list.setEnabled(!start);
-		this.openButton.setEnabled(!start);
-		this.copyCheckBox.setEnabled(!start);
-		this.keepPathCheckBox.setEnabled(!start);
+		changeState(start);
+	}
+
+	@Override
+	public boolean isStarted() {
+		return this.progressTask.isStarted();
 	}
 
 	private void runChain(final DirItem targetDir) {
@@ -146,6 +144,14 @@ public class ListPanel extends JPanel implements TaskTrigger {
 				this.keepPathCheckBox.isSelected()), 1);
 	}
 
+	private void changeState(final boolean start) {
+		this.startButton.setText((start) ? InterfaceStrings.STOP : InterfaceStrings.START);
+		this.list.setEnabled(!start);
+		this.openButton.setEnabled(!start);
+		this.copyCheckBox.setEnabled(!start);
+		this.keepPathCheckBox.setEnabled(!start);
+	}
+
 	private void initListeners() {
 		final EventManager events = EventManagerFactory.getInstance();
 		events.subscribe(CalculateFilesEvent.TOPIC, new CalculateFilesListener(this.progressTask));
@@ -160,9 +166,12 @@ public class ListPanel extends JPanel implements TaskTrigger {
 			@Override
 			public void handle(final ProgressBarEvent event) {
 				final ProgressBarMessage message = event.getItem();
-				progressBar.setIndeterminate(message.getValue() < 0);
+				progressBar.setIndeterminate(message.getValue() < 0 && progressTask.isStarted());
 				progressBar.setString(message.getMessage());
 				progressBar.setValue(message.getValue());
+				if (!progressTask.isStarted()) {
+					changeState(false);
+				}
 			}
 
 		});
