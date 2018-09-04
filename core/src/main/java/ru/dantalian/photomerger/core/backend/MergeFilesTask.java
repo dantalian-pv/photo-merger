@@ -128,7 +128,15 @@ public class MergeFilesTask extends AbstractExecutionTask<Long> {
 		} catch (IOException e) {
 			throw new TaskExecutionException("Failed to merge files", e);
 		} finally {
-			metadataFile.getDir().delete();
+			// Delete metadata directory and its content
+			final File metadataDir = metadataFile.getDir().getParentFile();
+			if (metadataDir.getName().equals(".metadata")) {
+				try {
+					Files.walkFileTree(metadataDir.toPath(), new DeleteFileVisitor());
+				} catch (final IOException e) {
+					logger.error("Failed to remove temporary metadata files", e);
+				}
+			}
 		}
 	}
 
