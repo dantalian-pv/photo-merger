@@ -90,7 +90,6 @@ public final class ChainTask extends TimerTask {
 			logger.error("Failed to calculate files", e);
 			ex = e;
 		} catch (final ChainStoppedException e) {
-			// Ignore it
 			ex = e;
 		} catch (final Exception e) {
 			logger.error("Executin chain failed", e);
@@ -99,7 +98,9 @@ public final class ChainTask extends TimerTask {
 			if (ex == null) {
 				this.progress.stopProcess("Merged " + filesCount + " files. Found " + duplicates + " duplicates", 100);
 				logger.info("Succesfully finished merging {} files", filesCount);
-			} else if (!(ex instanceof ChainStoppedException)) {
+			} else if (ex instanceof ChainStoppedException) {
+				this.progress.stopProcess("Process aborted. Run again.", 0);
+			} else {
 				this.progress.stopProcess("Error occured. See logs.", 0);
 			}
 			

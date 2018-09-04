@@ -120,9 +120,9 @@ public class ListPanel extends JPanel implements TaskTrigger {
 		} else {
 			// Stop all background threads
 			// Reset progress bar
-			this.progressTask.stopProcess("Process aborted. Run again", 0);
+			this.progressTask.stopProcess("Aborting process", -1);
 		}
-		changeState(start);
+		changeState(start, start);
 	}
 
 	@Override
@@ -144,7 +144,8 @@ public class ListPanel extends JPanel implements TaskTrigger {
 				this.keepPathCheckBox.isSelected()), 1);
 	}
 
-	private void changeState(final boolean start) {
+	private void changeState(final boolean start, final boolean enableStart) {
+		this.startButton.setEnabled(enableStart);
 		this.startButton.setText((start) ? InterfaceStrings.STOP : InterfaceStrings.START);
 		this.list.setEnabled(!start);
 		this.openButton.setEnabled(!start);
@@ -166,11 +167,11 @@ public class ListPanel extends JPanel implements TaskTrigger {
 			@Override
 			public void handle(final ProgressBarEvent event) {
 				final ProgressBarMessage message = event.getItem();
-				progressBar.setIndeterminate(message.getValue() < 0 && progressTask.isStarted());
+				progressBar.setIndeterminate(message.getValue() < 0);
 				progressBar.setString(message.getMessage());
 				progressBar.setValue(message.getValue());
 				if (!progressTask.isStarted()) {
-					changeState(false);
+					changeState(false, true);
 				}
 			}
 

@@ -33,6 +33,8 @@ public class TasksExecutor {
 	private static final Logger logger = LoggerFactory.getLogger(TasksExecutor.class);
 
 	private volatile boolean started;
+
+	private volatile boolean interrupted;
 	
 	public TasksExecutor() {
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -40,6 +42,14 @@ public class TasksExecutor {
 			@Override
 			public void run() {
 				started = false;
+				while (!interrupted) {
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {
+						logger.warn("interrupted sleep", e);
+					}
+				}
+				System.err.println("Interrupting the process");
 			}
 		}));
 	}
@@ -110,10 +120,12 @@ public class TasksExecutor {
 			ex = e;
 		} finally {
 			this.started = false;
+			this.interrupted = true;
 			if (ex == null) {
 				System.out.println("Merged " + filesCount + " files. Found " + duplicates + " duplicates");
 			} else if (ex instanceof ChainStoppedException) {
 				System.out.println("The process was interrupted");
+				this.interrupted = true;
 			} else {
 				logger.error("Error occured during the merge process", ex);
 			}
