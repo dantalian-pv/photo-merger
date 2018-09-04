@@ -29,7 +29,7 @@ import ru.dantalian.photomerger.core.model.EventManager;
 import ru.dantalian.photomerger.core.model.FileItem;
 import ru.dantalian.photomerger.core.utils.FileItemUtils;
 
-public class MergeFilesTask extends AbstractExecutionTask<Boolean> {
+public class MergeFilesTask extends AbstractExecutionTask<Long> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(MergeFilesTask.class);
 
@@ -58,13 +58,14 @@ public class MergeFilesTask extends AbstractExecutionTask<Boolean> {
 		this.events = events;
 	}
 
-	public List<Future<Boolean>> execute0() throws TaskExecutionException {
+	public List<Future<Long>> execute0() throws TaskExecutionException {
+		long duplicates = 0;
 		try (final BufferedReader reader = new BufferedReader(new FileReader(metadataFile.getDir()))) {
 			String line1 = null;
 			String line2 = null;
 			while (true) {
 				if (this.interrupted.get()) {
-					return Collections.singletonList(CompletableFuture.completedFuture(Boolean.FALSE));
+					return Collections.singletonList(CompletableFuture.completedFuture(duplicates));
 				}
 				line1 = (line1 == null) ? reader.readLine() : line1;
 				// Prevent reading after EOF
@@ -99,6 +100,7 @@ public class MergeFilesTask extends AbstractExecutionTask<Boolean> {
 									// Copy/move only one file
 									copyMoveFile(list.get(0), copy, keepPath);
 								} else {
+									duplicates++;
 									logger.info("Found duplicate {} and {}", list.get(0), list.get(i));
 									this.events.publish(new MergeFilesEvent(this.filesCount.incrementAndGet(), totalCount));
 								}
@@ -107,7 +109,7 @@ public class MergeFilesTask extends AbstractExecutionTask<Boolean> {
 					}
 					if (line2 == null) {
 						// Reached EOF
-						return Collections.singletonList(CompletableFuture.completedFuture(Boolean.FALSE));
+						return Collections.singletonList(CompletableFuture.completedFuture(duplicates));
 					}
 					line1 = line2;
 					line2 = null;
@@ -120,7 +122,7 @@ public class MergeFilesTask extends AbstractExecutionTask<Boolean> {
 					line1 = null;
 					line2 = null;
 				} else {
-					return Collections.singletonList(CompletableFuture.completedFuture(Boolean.FALSE));
+					return Collections.singletonList(CompletableFuture.completedFuture(duplicates));
 				}
 			}
 		} catch (IOException e) {

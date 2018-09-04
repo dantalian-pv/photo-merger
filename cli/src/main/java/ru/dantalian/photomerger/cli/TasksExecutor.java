@@ -49,6 +49,7 @@ public class TasksExecutor {
 		
 		long filesCount = 0;
 		Exception ex = null;
+		long duplicates = 0;
 		try {
 			validate(target, sources);
 
@@ -95,7 +96,7 @@ public class TasksExecutor {
 						keep,
 						filesCount,
 						events);
-				mergeFiles.execute().iterator().next().get();
+				duplicates = mergeFiles.execute().iterator().next().get();
 				mergeFiles.interrupt();
 			}
 		} catch (InterruptedException e) {
@@ -110,7 +111,7 @@ public class TasksExecutor {
 		} finally {
 			this.started = false;
 			if (ex == null) {
-				System.out.println("Succesfully finished merging " + filesCount + " files");
+				System.out.println("Merged " + filesCount + " files. Found " + duplicates + " duplicates");
 			} else if (ex instanceof ChainStoppedException) {
 				System.out.println("The process was interrupted");
 			} else {

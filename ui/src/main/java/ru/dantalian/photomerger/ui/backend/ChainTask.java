@@ -46,6 +46,7 @@ public final class ChainTask extends TimerTask {
 	public void run() {
 		long filesCount = 0;
 		Exception ex = null;
+		long duplicates = 0;
 		try {
 			checkState();
 			final EventManager events = EventManagerFactory.getInstance();
@@ -83,7 +84,7 @@ public final class ChainTask extends TimerTask {
 					keepPath,
 					filesCount,
 					events);
-			mergeFiles.execute().iterator().next().get();
+			duplicates = mergeFiles.execute().iterator().next().get();
 			mergeFiles.interrupt();
 		} catch (InterruptedException e) {
 			logger.error("Failed to calculate files", e);
@@ -96,7 +97,7 @@ public final class ChainTask extends TimerTask {
 			ex = e;
 		} finally {
 			if (ex == null) {
-				this.progress.stopProcess("Succesfully finished merging " + filesCount + " files", 100);
+				this.progress.stopProcess("Merged " + filesCount + " files. Found " + duplicates + " duplicates", 100);
 				logger.info("Succesfully finished merging {} files", filesCount);
 			} else if (!(ex instanceof ChainStoppedException)) {
 				this.progress.stopProcess("Error occured. See logs.", 0);
