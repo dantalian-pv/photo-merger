@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.util.Enumeration;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Timer;
 
 import javax.swing.DefaultListModel;
@@ -27,6 +28,7 @@ import ru.dantalian.photomerger.core.model.EventManager;
 import ru.dantalian.photomerger.ui.backend.ChainTask;
 import ru.dantalian.photomerger.ui.backend.OffsetProgressCalculator;
 import ru.dantalian.photomerger.ui.backend.ProgressBarTask;
+import ru.dantalian.photomerger.ui.backend.ResourceBundleFactory;
 import ru.dantalian.photomerger.ui.backend.TaskTrigger;
 import ru.dantalian.photomerger.ui.events.CalculateFilesListener;
 import ru.dantalian.photomerger.ui.events.MergeFilesListener;
@@ -38,6 +40,8 @@ import ru.dantalian.photomerger.ui.events.StoreMetadataListener;
 public class ListPanel extends JPanel implements TaskTrigger {
 
 	private static final long serialVersionUID = 5256789631660062837L;
+	
+	private final ResourceBundle messages;
 
 	private final JList<DirItem> list;
 
@@ -61,23 +65,25 @@ public class ListPanel extends JPanel implements TaskTrigger {
 
 	public ListPanel() {
 		super(new BorderLayout(5, 5));
+		
+		messages = ResourceBundleFactory.getInstance().getBundle();
 
 		this.listModel = new DefaultListModel<DirItem>();
 
 		this.list = new SourceDirList(listModel);
 		final JScrollPane listScrollPane = new JScrollPane(list);
 
-		this.openButton = new SelectSourceDir(InterfaceStrings.ADD, listModel);
+		this.openButton = new SelectSourceDir(messages.getString(InterfaceStrings.ADD), listModel);
 
 		this.progressBar = new JProgressBar(0, 100);
-		this.progressBar.setString("<- Add source directories and then select a target ->");
+		this.progressBar.setString(messages.getString(InterfaceStrings.ADD_SOURCE_SET_TARGET));
 		this.progressBar.setStringPainted(true);
 
 		this.progressTask = new ProgressBarTask(EventManagerFactory.getInstance());
 		this.timer.scheduleAtFixedRate(this.progressTask, 0, 1000);
 		this.progressTask.setProgress(this.progressBar.getString(), 0);
 
-		this.startButton = new SelectTargetDir(InterfaceStrings.START, listModel, this);
+		this.startButton = new SelectTargetDir(messages.getString(InterfaceStrings.START), listModel, this);
 
 		final JPanel buttonPane = new JPanel();
 		buttonPane.setLayout(new BorderLayout(5, 5));
@@ -85,17 +91,18 @@ public class ListPanel extends JPanel implements TaskTrigger {
 		buttonPane.add(progressBar, BorderLayout.CENTER);
 		buttonPane.add(startButton, BorderLayout.EAST);
 
-		this.copyCheckBox = new JCheckBox(InterfaceStrings.COPY);
+		this.copyCheckBox = new JCheckBox(messages.getString(InterfaceStrings.COPY));
 		this.copyCheckBox.setSelected(true);
 		this.copyCheckBox.addChangeListener(new ChangeListener() {
 
 			@Override
 			public void stateChanged(final ChangeEvent e) {
-				copyCheckBox.setText((copyCheckBox.isSelected()) ? InterfaceStrings.COPY : InterfaceStrings.MOVE);
+				copyCheckBox.setText((copyCheckBox.isSelected())
+						? messages.getString(InterfaceStrings.COPY) : messages.getString(InterfaceStrings.MOVE));
 			}
 		});
 
-		this.keepPathCheckBox = new JCheckBox(InterfaceStrings.KEEP_PATH);
+		this.keepPathCheckBox = new JCheckBox(messages.getString(InterfaceStrings.KEEP_PATH));
 		this.keepPathCheckBox.setSelected(true);
 
 		final JPanel checkBoxPane = new JPanel();
@@ -115,12 +122,13 @@ public class ListPanel extends JPanel implements TaskTrigger {
 		if (start) {
 			// Start long run calculations
 			this.progressTask.startProcess();
-			this.progressTask.setProgress(InterfaceStrings.CALCULATING_AMOUNT_OF_WORK, -1);
+			this.progressTask.setProgress(messages.getString(
+					InterfaceStrings.CALCULATING_AMOUNT_OF_WORK), -1);
 			runChain(targetDir);
 		} else {
 			// Stop all background threads
 			// Reset progress bar
-			this.progressTask.stopProcess("Aborting process", -1);
+			this.progressTask.stopProcess(messages.getString(InterfaceStrings.ABORTING), -1);
 		}
 		changeState(start, start);
 	}
@@ -141,12 +149,14 @@ public class ListPanel extends JPanel implements TaskTrigger {
 				targetDir,
 				scrDirs,
 				this.copyCheckBox.isSelected(),
-				this.keepPathCheckBox.isSelected()), 1);
+				this.keepPathCheckBox.isSelected(),
+				this.messages), 1);
 	}
 
 	private void changeState(final boolean start, final boolean enableStart) {
 		this.startButton.setEnabled(enableStart);
-		this.startButton.setText((start) ? InterfaceStrings.STOP : InterfaceStrings.START);
+		this.startButton.setText((start)
+				? messages.getString(InterfaceStrings.STOP) : messages.getString(InterfaceStrings.START));
 		this.list.setEnabled(!start);
 		this.openButton.setEnabled(!start);
 		this.copyCheckBox.setEnabled(!start);
@@ -155,13 +165,13 @@ public class ListPanel extends JPanel implements TaskTrigger {
 
 	private void initListeners() {
 		final EventManager events = EventManagerFactory.getInstance();
-		events.subscribe(CalculateFilesEvent.TOPIC, new CalculateFilesListener(this.progressTask));
+		events.subscribe(CalculateFilesEvent.TOPIC, new CalculateFilesListener(this.progressTask, this.messages));
 		events.subscribe(StoreMetadataEvent.TOPIC, new StoreMetadataListener(this.progressTask,
-				new OffsetProgressCalculator(0)));
+				new OffsetProgressCalculator(0), this.messages));
 		events.subscribe(MergeMetadataEvent.TOPIC, new MergeMetadataListener(this.progressTask,
-				new OffsetProgressCalculator(33)));
+				new OffsetProgressCalculator(33), this.messages));
 		events.subscribe(MergeFilesEvent.TOPIC, new MergeFilesListener(this.progressTask,
-				new OffsetProgressCalculator(66)));
+				new OffsetProgressCalculator(66), this.messages));
 		events.subscribe(ProgressBarEvent.TOPIC, new EventListener<ProgressBarEvent>() {
 
 			@Override

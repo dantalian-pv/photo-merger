@@ -1,5 +1,7 @@
 package ru.dantalian.photomerger.ui;
 
+import java.awt.Dimension;
+
 import javax.swing.JFrame;
 
 import org.slf4j.Logger;
@@ -17,9 +19,10 @@ public class MainFrame {
 		logger.info("Init main frame");
 		this.frame = new JFrame("Photo Merger");
 		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.frame.setSize(400, 400);
+		this.frame.setMinimumSize(new Dimension(400, 400));
 		this.frame.getContentPane().add(new ListPanel());
 		this.frame.setVisible(true);
+		this.frame.pack();
 	}
 
 }

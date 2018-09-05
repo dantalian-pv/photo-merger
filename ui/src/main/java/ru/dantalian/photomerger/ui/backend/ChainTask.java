@@ -1,8 +1,10 @@
 package ru.dantalian.photomerger.ui.backend;
 
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.TimerTask;
 import java.util.concurrent.Future;
 
@@ -18,6 +20,7 @@ import ru.dantalian.photomerger.core.backend.StoreMetadataTask;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
 import ru.dantalian.photomerger.ui.ProgressStateManager;
+import ru.dantalian.photomerger.ui.elements.InterfaceStrings;
 
 public final class ChainTask extends TimerTask {
 
@@ -33,13 +36,17 @@ public final class ChainTask extends TimerTask {
 
 	private final List<DirItem> scrDirs;
 
+	private final ResourceBundle messages;
+
 	public ChainTask(final ProgressStateManager progress, final DirItem targetDir,
-			List<DirItem> scrDirs, final boolean copy, final boolean keepPath) {
+			List<DirItem> scrDirs, final boolean copy, final boolean keepPath,
+			ResourceBundle messages) {
 		this.progress = progress;
 		this.targetDir = targetDir;
 		this.scrDirs = Collections.unmodifiableList(scrDirs);
 		this.copy = copy;
 		this.keepPath = keepPath;
+		this.messages = messages;
 	}
 
 	@Override
@@ -96,14 +103,14 @@ public final class ChainTask extends TimerTask {
 			ex = e;
 		} finally {
 			if (ex == null) {
-				this.progress.stopProcess("Merged " + filesCount + " files. Found " + duplicates + " duplicates", 100);
-				logger.info("Succesfully finished merging {} files", filesCount);
+				this.progress.stopProcess(MessageFormat.format(messages.getString(InterfaceStrings.MERGED),
+						filesCount, duplicates), 100);
+				logger.info("Succesfully finished merging {} files. Found {} duplicates", filesCount, duplicates);
 			} else if (ex instanceof ChainStoppedException) {
-				this.progress.stopProcess("Process aborted. Run again.", 0);
+				this.progress.stopProcess(messages.getString(InterfaceStrings.ABORTED), 0);
 			} else {
-				this.progress.stopProcess("Error occured. See logs.", 0);
+				this.progress.stopProcess(messages.getString(InterfaceStrings.ERROR), 0);
 			}
-			
 		}
 	}
 
