@@ -13,6 +13,10 @@
 	<packaging>jar</packaging>
 
 	<name>photo-merger: Client</name>
+	
+	<properties>
+		<console-main-class>ru.dantalian.photomerger.cli.PhotoMergerMain</console-main-class>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -58,17 +62,27 @@
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>appassembler-maven-plugin</artifactId>
 				<configuration>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-					<archive>
-						<manifest>
-							<mainClass>ru.dantalian.photomerger.cli.PhotoMergerMain</mainClass>
-						</manifest>
-					</archive>
+					<programs>
+						<program>
+							<id>photo-merger-cli</id>
+							<mainClass>${console-main-class}</mainClass>
+						</program>
+					</programs>
 				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>assemble</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>

@@ -14,6 +14,10 @@
 
 	<name>photo-merger: UI</name>
 
+	<properties>
+		<ui-main-class>ru.dantalian.photomerger.ui.PhotoMergerMain</ui-main-class>
+	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>ru.dantalian.photomerger</groupId>
@@ -49,17 +53,27 @@
 	<build>
 		<plugins>
 			<plugin>
-				<artifactId>maven-assembly-plugin</artifactId>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>appassembler-maven-plugin</artifactId>
 				<configuration>
-					<descriptorRefs>
-						<descriptorRef>jar-with-dependencies</descriptorRef>
-					</descriptorRefs>
-					<archive>
-						<manifest>
-							<mainClass>ru.dantalian.photomerger.ui.PhotoMergerMain</mainClass>
-						</manifest>
-					</archive>
+					<programs>
+						<program>
+							<id>photo-merger-ui</id>
+							<mainClass>${ui-main-class}</mainClass>
+						</program>
+					</programs>
 				</configuration>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>assemble</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>
