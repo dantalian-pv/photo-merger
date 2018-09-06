@@ -25,15 +25,35 @@ For preventing any data loss the application only moves/copies files, but never 
 
 To run the application `jvm` (`java`, `jre`) version 8.0 is needed
 
+### Compiling from source
+
+#### Requirements
+
+* `java` version at least 1.8 https://java.com/ru/download/
+* `maven` version at least 3.5 https://maven.apache.org/download.cgi
+* `git` - (optional) to download sources
+
+#### Compiling steps
+
+* Download source by one of the ways
+  * `$> git clone https://github.com/dantalian-pv/photo-merger.git`
+  * Or download using any web-browser from https://github.com/dantalian-pv/photo-merger/archive/master.zip
+* Go into `photo-merger` directory
+* Run `$> mvn clean package`
+
+
+
 ### Running
 
-Run the application using:
+* Extract archive from `cli/target/photo-merger-cli-0.1.1.tar.gz` or `ui/target/photo-merger-ui-0.1.1.tar.gz` to any suitable place
+* Go into `bin/` sub-folder 
+* Run the application using:
+  * `$> ./photo-merger-cli` - for command line version on linux
+  * `$> photo-merger-cli.bat` - for command line version on windows
+  * `$> ./photo-merger-ui` - for UI version on linux
+  * `$> photo-merger-ui.bat` - for UI version on windows
 
-`$> java -jar photo-merger.jar`
-
-Run the application storing output into the log file:
-
-`$> java -jar photo-merger.jar > out.log`
+Log files will be places in `logs/` sub-folder
 
 ### User interface
 
