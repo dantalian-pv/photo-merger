@@ -63,6 +63,8 @@ public class ListPanel extends JPanel implements TaskTrigger {
 
 	private final Timer chainTimer = new Timer("tasks-chain", true);
 
+	private volatile ChainTask currentChain;
+
 	public ListPanel() {
 		super(new BorderLayout(5, 5));
 		
@@ -128,6 +130,7 @@ public class ListPanel extends JPanel implements TaskTrigger {
 		} else {
 			// Stop all background threads
 			// Reset progress bar
+			this.currentChain.interrupt();
 			this.progressTask.stopProcess(messages.getString(InterfaceStrings.ABORTING), -1);
 		}
 		changeState(start, start);
@@ -144,13 +147,14 @@ public class ListPanel extends JPanel implements TaskTrigger {
 		while (elements.hasMoreElements()) {
 			scrDirs.add(elements.nextElement());
 		}
-		this.chainTimer.schedule(new ChainTask(
+		this.currentChain = new ChainTask(
 				this.progressTask,
 				targetDir,
 				scrDirs,
 				this.copyCheckBox.isSelected(),
 				this.keepPathCheckBox.isSelected(),
-				this.messages), 1);
+				this.messages);
+		this.chainTimer.schedule(this.currentChain, 1);
 	}
 
 	private void changeState(final boolean start, final boolean enableStart) {
@@ -182,6 +186,7 @@ public class ListPanel extends JPanel implements TaskTrigger {
 				progressBar.setValue(message.getValue());
 				if (!progressTask.isStarted()) {
 					changeState(false, true);
+					currentChain = null;
 				}
 			}
 

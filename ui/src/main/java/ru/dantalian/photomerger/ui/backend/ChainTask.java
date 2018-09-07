@@ -11,6 +11,7 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ru.dantalian.photomerger.core.ExecutionTask;
 import ru.dantalian.photomerger.core.backend.CalculateFilesTask;
 import ru.dantalian.photomerger.core.backend.ChainStoppedException;
 import ru.dantalian.photomerger.core.backend.EventManagerFactory;
@@ -37,6 +38,8 @@ public final class ChainTask extends TimerTask {
 	private final List<DirItem> scrDirs;
 
 	private final ResourceBundle messages;
+	
+	private volatile ExecutionTask<?> currentTask;
 
 	public ChainTask(final ProgressStateManager progress, final DirItem targetDir,
 			List<DirItem> scrDirs, final boolean copy, final boolean keepPath,
@@ -59,6 +62,7 @@ public final class ChainTask extends TimerTask {
 			final EventManager events = EventManagerFactory.getInstance();
 			final CalculateFilesTask calculateFilesTask = new CalculateFilesTask(
 					scrDirs, targetDir, events);
+			this.currentTask = calculateFilesTask;
 			final List<Future<Long>> calculateFiles = calculateFilesTask.execute();
 			long calcCount = 0;
 			for (final Future<Long> future : calculateFiles) {
@@ -69,8 +73,10 @@ public final class ChainTask extends TimerTask {
 			filesCount = calcCount;
 			calculateFilesTask.interrupt();
 
+			checkState();
 			final StoreMetadataTask storeMetadataTask = new StoreMetadataTask(scrDirs, targetDir, filesCount,
 					events);
+			this.currentTask = storeMetadataTask;
 			final List<Future<List<DirItem>>> storeMetadata = storeMetadataTask.execute();
 			final List<DirItem> metadataFiles = new LinkedList<>();
 			for (final Future<List<DirItem>> future : storeMetadata) {
@@ -80,17 +86,21 @@ public final class ChainTask extends TimerTask {
 			checkState();
 			storeMetadataTask.interrupt();
 
+			checkState();
 			// Merging all metadata files into one
 			final MergeMetadataTask mergeTask = new MergeMetadataTask(targetDir, metadataFiles, events);
+			this.currentTask = mergeTask;
 			final DirItem metadataFile = mergeTask.execute().iterator().next().get();
 			mergeTask.interrupt();
 
+			checkState();
 			final MergeFilesTask mergeFiles = new MergeFilesTask(targetDir,
 					metadataFile,
 					copy,
 					keepPath,
 					filesCount,
 					events);
+			this.currentTask = mergeFiles;
 			duplicates = mergeFiles.execute().iterator().next().get();
 			mergeFiles.interrupt();
 		} catch (InterruptedException e) {
@@ -102,6 +112,7 @@ public final class ChainTask extends TimerTask {
 			logger.error("Executin chain failed", e);
 			ex = e;
 		} finally {
+			this.currentTask = null;
 			if (ex == null) {
 				this.progress.stopProcess(MessageFormat.format(messages.getString(InterfaceStrings.MERGED),
 						filesCount, duplicates), 100);
@@ -111,6 +122,12 @@ public final class ChainTask extends TimerTask {
 			} else {
 				this.progress.stopProcess(messages.getString(InterfaceStrings.ERROR), 0);
 			}
+		}
+	}
+	
+	public void interrupt() {
+		if (this.currentTask != null) {
+			this.currentTask.interrupt();
 		}
 	}
 

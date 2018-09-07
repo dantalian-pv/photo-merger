@@ -59,7 +59,7 @@ public class CalculateFilesTask extends AbstractExecutionTask<Long> {
 		return futures;
 	}
 
-	private class CalculateSubtask implements Callable<Long> {
+	public class CalculateSubtask implements Callable<Long> {
 
 		private final DirItem dirItem;
 
@@ -69,6 +69,10 @@ public class CalculateFilesTask extends AbstractExecutionTask<Long> {
 
 		@Override
 		public Long call() throws Exception {
+			if (interrupted.get()) {
+				logger.warn("Task interrupted");
+				return Long.valueOf(0L);
+			}
 			logger.info("Calculating files in {}", dirItem);
 			final IncrementCounterVisitor visitor = new IncrementCounterVisitor();
 			Files.walkFileTree(this.dirItem.getDir().toPath(),
