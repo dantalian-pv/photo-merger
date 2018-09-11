@@ -177,9 +177,11 @@ public class MergeFilesTask extends AbstractExecutionTask<Long> {
 				}
 			}
 		}
-		final File dir = target.getParent().toFile();
-		if (!dir.exists()) {
-			dir.mkdirs();
+		if (target.getParent() != null) {
+			final File dir = target.getParent().toFile();
+			if (!dir.exists()) {
+				dir.mkdirs();
+			}
 		}
 		if (copy) {
 			Files.copy(source, target, StandardCopyOption.COPY_ATTRIBUTES);

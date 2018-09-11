@@ -82,7 +82,7 @@ public class MergeMetadataTask extends AbstractExecutionTask<DirItem> {
 			boolean createEmpty = true;
 			while (iterator.hasNext()) {
 				if (this.interrupted.get()) {
-					Collections.singletonList(CompletableFuture.completedFuture(null));
+					return Collections.singletonList(CompletableFuture.completedFuture(iterator.next()));
 				}
 				final DirItem left = iterator.next();
 				this.events.publish(new MergeMetadataEvent(filesCount.incrementAndGet(), totalCount));
@@ -154,12 +154,12 @@ public class MergeMetadataTask extends AbstractExecutionTask<DirItem> {
 						writer.println(FileItemUtils.externalize(leftItem));
 						leftItem = null;
 					} else {
-						if (leftItem.compareTo(rightItem) == 0) {
+						if (leftItem != null && leftItem.compareTo(rightItem) == 0) {
 							writer.println(FileItemUtils.externalize(leftItem));
 							leftItem = null;
 							writer.println(FileItemUtils.externalize(rightItem));
 							rightItem = null;
-						} else if (leftItem.compareTo(rightItem) < 0) {
+						} else if (leftItem != null && leftItem.compareTo(rightItem) < 0) {
 							writer.println(FileItemUtils.externalize(leftItem));
 							leftItem = null;
 						} else {
