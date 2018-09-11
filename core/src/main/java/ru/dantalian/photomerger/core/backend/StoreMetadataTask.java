@@ -68,7 +68,8 @@ public class StoreMetadataTask extends AbstractExecutionTask<List<DirItem>> {
 		this.pool = pool;
 	}
 
-	public List<Future<List<DirItem>>> execute0() throws TaskExecutionException {
+	@Override
+	protected List<Future<List<DirItem>>> execute0() throws TaskExecutionException {
 		final List<Future<List<DirItem>>> futures = new LinkedList<>();
 
 		futures.add(pool.submit(new StoreMetadataCommand(targetDir, targetDir, this.interrupted)));

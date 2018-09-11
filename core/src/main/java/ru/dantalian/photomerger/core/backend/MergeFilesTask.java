@@ -58,7 +58,7 @@ public class MergeFilesTask extends AbstractExecutionTask<Long> {
 		this.events = events;
 	}
 
-	public List<Future<Long>> execute0() throws TaskExecutionException {
+	protected List<Future<Long>> execute0() throws TaskExecutionException {
 		long duplicates = 0;
 		try (final BufferedReader reader = new BufferedReader(new FileReader(metadataFile.getDir()))) {
 			String line1 = null;

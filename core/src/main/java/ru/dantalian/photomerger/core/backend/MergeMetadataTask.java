@@ -68,7 +68,7 @@ public class MergeMetadataTask extends AbstractExecutionTask<DirItem> {
 	}
 
 	@Override
-	public List<Future<DirItem>> execute0() throws TaskExecutionException {
+	protected List<Future<DirItem>> execute0() throws TaskExecutionException {
 		List<DirItem> metadataFiles = new LinkedList<>(this.metadataFiles);
 		while (true) {
 			if (metadataFiles.size() == 1) {
