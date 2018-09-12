@@ -25,7 +25,7 @@ public class CalculateFilesTask extends AbstractExecutionTask<Long> {
 	private final ThreadPoolExecutor pool;
 
 	private final AtomicLong filesCount = new AtomicLong(0);
-	
+
 	public CalculateFilesTask(final List<DirItem> sourceDirs, final DirItem targetDir,
 			final EventManager events) {
 		this(sourceDirs, targetDir, events, ThreadPoolFactory.getThreadPool(ThreadPoolFactory.CALC_FILES_POOL));

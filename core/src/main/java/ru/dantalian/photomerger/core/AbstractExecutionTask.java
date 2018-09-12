@@ -16,7 +16,7 @@ public abstract class AbstractExecutionTask<T> implements ExecutionTask<T> {
 	public void interrupt() {
 		this.interrupted.set(true);
 	}
-	
+
 	@Override
 	public List<Future<T>> execute() throws TaskExecutionException {
 		if (this.interrupted.get()) {
@@ -24,7 +24,7 @@ public abstract class AbstractExecutionTask<T> implements ExecutionTask<T> {
 		}
 		return this.execute0();
 	}
-	
+
 	protected abstract List<Future<T>> execute0() throws TaskExecutionException;
 
 }
