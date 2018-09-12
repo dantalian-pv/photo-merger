@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.core.backend.tasks;
+package ru.dantalian.photomerger.core.backend.commands;
 
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -19,18 +19,21 @@ import ru.dantalian.photomerger.core.events.CalculateFilesEvent;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
 
-public class CalculateFilesSubtask implements Callable<Long> {
+public class CalculateFilesCommand implements Callable<Long> {
 	
-	private static final Logger logger = LoggerFactory.getLogger(CalculateFilesSubtask.class);
+	private static final Logger logger = LoggerFactory.getLogger(CalculateFilesCommand.class);
 
 	private final DirItem dirItem;
 
 	private final EventManager events;
-	private FileTreeWalker fileTreeWalker;
+
+	private final FileTreeWalker fileTreeWalker;
+
 	private final AtomicLong filesCount;
+
 	private final AtomicBoolean interrupted;
 
-	public CalculateFilesSubtask(final DirItem dirItem, final EventManager events,
+	public CalculateFilesCommand(final DirItem dirItem, final EventManager events,
 			final FileTreeWalker fileTreeWalker,
 			final AtomicLong filesCount, final AtomicBoolean interrupted) {
 		this.dirItem = dirItem;

@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.core.backend.tasks;
+package ru.dantalian.photomerger.core.backend.commands;
 
 import java.io.File;
 import java.nio.file.FileVisitor;
@@ -21,12 +21,13 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import ru.dantalian.photomerger.core.backend.FileTreeWalker;
+import ru.dantalian.photomerger.core.backend.commands.CalculateFilesCommand;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ AtomicBoolean.class })
-public class CalculateFilesSubtaskTest {
+public class CalculateFilesCommandTest {
 
 	@Mock
 	private DirItem dirItem;
@@ -44,7 +45,7 @@ public class CalculateFilesSubtaskTest {
 	private AtomicBoolean interrupted;
 
 	@InjectMocks
-	private CalculateFilesSubtask calculateFilesCall;
+	private CalculateFilesCommand calculateFilesCall;
 
 	@Before
 	public void init() {

@@ -30,7 +30,7 @@ import ru.dantalian.photomerger.core.model.FileItem;
 import ru.dantalian.photomerger.core.utils.FileItemUtils;
 
 public class MergeFilesTask extends AbstractExecutionTask<Long> {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(MergeFilesTask.class);
 
 	private final EventManager events;
