@@ -21,7 +21,7 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 
-		<swt-version>4.6.1</swt-version>
+		<swt-version>4.9</swt-version>
 
 		<progressbar-version>0.7.1</progressbar-version>
 		<picocli-version>3.5.2</picocli-version>
@@ -199,7 +199,7 @@
 	<repositories>
 		<repository>
 			<id>maven-eclipse-repo</id>
-			<url>http://maven-eclipse.github.io/maven</url>
+			<url>https://dantalian-pv.github.io/maven-eclipse.github.io/maven</url>
 		</repository>
 	</repositories>
 
