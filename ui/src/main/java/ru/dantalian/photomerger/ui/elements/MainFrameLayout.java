@@ -6,6 +6,8 @@ import java.util.ResourceBundle;
 import java.util.Timer;
 
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -16,6 +18,7 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,16 +82,9 @@ public class MainFrameLayout implements TaskTrigger {
 		this.copyButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
-				Display.getDefault().asyncExec(new Runnable() {
-
-					@Override
-					public void run() {
-						copyButton.setText((copyButton.getSelection())
-								? messages.getString(InterfaceStrings.COPY) : messages.getString(InterfaceStrings.MOVE));
-						top.layout();
-					}
-				
-				});
+				copyButton.setText((copyButton.getSelection())
+						? messages.getString(InterfaceStrings.COPY) : messages.getString(InterfaceStrings.MOVE));
+				top.layout();
 			}
 		});
 
@@ -104,6 +100,20 @@ public class MainFrameLayout implements TaskTrigger {
 		
 		this.list = new List(shell, SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL);
 		this.list.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		this.list.addKeyListener(new KeyListener() {
+			
+			@Override
+			public void keyReleased(KeyEvent e) {
+			}
+			
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.keyCode == SWT.DEL) {
+					final int[] selectionIndices = list.getSelectionIndices();
+					list.remove(selectionIndices);
+				}
+			}
+		});
 		
 		Composite bottom = new Composite(shell, SWT.NONE);
 		GridLayout d3 = new GridLayout(3, false);
@@ -115,17 +125,50 @@ public class MainFrameLayout implements TaskTrigger {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				final DirectoryDialog dd = new DirectoryDialog(shell, SWT.APPLICATION_MODAL);
-				dd.setMessage("Choose");
-				dd.setText("text");
+				dd.setMessage(messages.getString(InterfaceStrings.ADD_SOURCE));
+				dd.setText(messages.getString(InterfaceStrings.SET_DIR));
 				final String string = dd.open();
 				if (string != null) {
-					Display.getDefault().asyncExec(new Runnable() {
-						
-						@Override
-						public void run() {
-							list.add(string);
+					final String s = string + "/";
+					final String[] items = list.getItems();
+					boolean found = false;
+					for (String sdir: items) {
+						sdir += "/";
+						if (s.contains(sdir) || sdir.contains(s)) {
+							found = true;
+							break;
 						}
-					});
+					}
+					if (found) {
+						boolean parent = false;
+						for (String sdir: items) {
+							sdir += "/";
+							if (sdir.contains(s) && !sdir.equals(s)) {
+								parent = true;
+							}
+						}
+						if (parent) {
+							final MessageBox messageBox = new MessageBox(shell, SWT.ICON_WARNING | SWT.YES | SWT.NO);
+			        
+			        messageBox.setText(messages.getString(InterfaceStrings.PARENT_DIR));
+			        messageBox.setMessage(messages.getString(InterfaceStrings.REPLACE_WITH_PARENT));
+			        final int buttonID = messageBox.open();
+		          if (buttonID == SWT.YES) {
+		            // Remove all children directories and then add parent
+		          	for (int i = items.length - 1; i >= 0; i--) {
+		          		final String sdir = items[i] + "/";
+		          		if (sdir.contains(s)) {
+		          			list.remove(i);
+		          		}
+		          	}
+		          	logger.info("add {}", string);
+								list.add(string);
+		          }
+						}
+					} else {
+						logger.info("add {}", string);
+						list.add(string);
+					}
 				}
 			}
 		});
@@ -137,6 +180,51 @@ public class MainFrameLayout implements TaskTrigger {
 		
 		this.targetButton = new Button(bottom, SWT.PUSH);
 		this.targetButton.setText(messages.getString(InterfaceStrings.START));
+		this.targetButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (isStarted()) {
+					startStop(false, null);
+				} else {
+					if (list.getItemCount() == 0) {
+						final MessageBox messageBox = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
+		        messageBox.setText(messages.getString(InterfaceStrings.ERROR_TITLE));
+		        messageBox.setMessage(messages.getString(InterfaceStrings.NO_SOURCE));
+		        messageBox.open();
+						return;
+					}
+					while (true) {
+						final DirectoryDialog dd = new DirectoryDialog(shell, SWT.APPLICATION_MODAL);
+						dd.setMessage(messages.getString(InterfaceStrings.SET_TARGET));
+						dd.setText(messages.getString(InterfaceStrings.SET_DIR));
+						final String dir = dd.open();
+						if (dir != null) {
+							final String tdir = dir + "/";
+							final String[] items = list.getItems();
+							boolean err = false;
+							for (String sdir: items) {
+								sdir += "/";
+								if (tdir.equals(sdir) || tdir.contains(sdir) || sdir.contains(tdir)) {
+									final MessageBox messageBox = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
+					        messageBox.setText(messages.getString(InterfaceStrings.ERROR_TITLE));
+					        messageBox.setMessage(messages.getString(InterfaceStrings.DIFFER_TARGET));
+					        messageBox.open();
+									err = true;
+									break;
+								}
+							}
+							if (err) {
+								continue;
+							}
+							startStop(true, new DirItem(new File(dir)));
+							return;
+						} else {
+							return;
+						}
+					}
+				}
+			}
+		});
 
 		GridData d4 = new GridData(SWT.FILL, SWT.TOP, true, false);
 		bottom.setLayoutData(d4);
