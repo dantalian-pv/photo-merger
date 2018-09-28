@@ -109,7 +109,7 @@ public final class ChainTask extends TimerTask {
 		} catch (final ChainStoppedException e) {
 			ex = e;
 		} catch (final Exception e) {
-			logger.error("Executin chain failed", e);
+			logger.error("Executing chain failed", e);
 			ex = e;
 		} finally {
 			this.currentTask = null;

@@ -4,7 +4,7 @@ Merge multiple folders into one with files deduplication function based on CRC c
 ## Preconditions
 
 This application generally was created to copy/move photographies placed in different folders into one folder avoiding duplications. But the application can also be used for any types of files.
-Assume the situation when you copy photographies from your mobile phone into different folders, drives or devices multiple times just to free the space on your phone. And now you have multiple copies of one file in different places. After a while you decided to re-structure and rename some of this photos in one the folders.
+Assume the situation when you copy photographies from your mobile phone into different folders, drives or devices multiple times just to free the space on your phone. And now you have multiple copies of one file in different places. After a while you decided to re-structure and rename some of this photos in one of the folders.
 But after some time you want to get rid of this multiple copies and finally make one well structured catalog.
 Exactly for this purpose this application was created. The application detects duplications even if a file was renamed or has a different path.
 
@@ -12,10 +12,11 @@ Exactly for this purpose this application was created. The application detects d
 
 The application has the next workflow:
 
-* Calculate CRC (crc64) for all files which are going to be merged into one "target" folder;
-* Store this data into temporary file because metadata about all files, possibly, will not fit into RAM;
-* Sort metadata based on CRC;
-* Search for CRC duplications in the list and copy/move only one file of all dups;
+* Gather metadata of all files in "source" and "target" folders;
+* Store this metadata into a temporary file inside target folder, because metadata of all files, possibly, will not fit into RAM;
+* Sort this metadata by file size to simplify files comparison; 
+* Calculate CRC (crc64) for files with the same size which are going to be merged into one "target" folder;
+* Search for CRC duplications in the list and copy/move only one file of all duplicates, or just move/copy a file if no duplicates found;
 
 For preventing any data loss the application only moves/copies files, but never deletes or rewrites them.
 
@@ -23,7 +24,7 @@ For preventing any data loss the application only moves/copies files, but never 
 
 ### Requirements
 
-To run the application `jvm` (`java`, `jre`) version 8.0 is needed
+To run the application `jvm` (`java`, `jre`) version 8.0 or higher is needed
 
 ### Compiling from source
 

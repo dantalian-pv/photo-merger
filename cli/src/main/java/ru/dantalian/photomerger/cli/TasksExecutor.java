@@ -35,6 +35,8 @@ public class TasksExecutor {
 	private volatile boolean started;
 
 	private volatile boolean interrupted;
+
+	private volatile boolean finished;
 	
 	public TasksExecutor() {
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -49,7 +51,9 @@ public class TasksExecutor {
 						logger.warn("interrupted sleep", e);
 					}
 				}
-				System.err.println("Interrupting the process");
+				if (!finished) {
+					System.err.println("Interrupting the process");
+				}
 			}
 		}));
 	}
@@ -116,12 +120,13 @@ public class TasksExecutor {
 			// Ignore it
 			ex = e;
 		} catch(final Exception e) {
-			logger.error("Executin chain failed", e);
+			logger.error("Executing chain failed", e);
 			ex = e;
 		} finally {
 			this.started = false;
 			this.interrupted = true;
 			if (ex == null) {
+				this.finished = true;
 				System.out.println("Merged " + filesCount + " files. Found " + duplicates + " duplicates");
 			} else if (ex instanceof ChainStoppedException) {
 				System.out.println("The process was interrupted");
