@@ -56,11 +56,23 @@ public class FileItemUtils {
 	}
 
 	private static void validate(final File rootPath, final File file) {
-		if (rootPath == null || !rootPath.exists() || !rootPath.isDirectory()) {
-			throw new IllegalArgumentException("root path should not be null " + file);
+		if (rootPath == null) {
+			throw new NullPointerException("root path cannot be null");
 		}
-		if (file == null || !file.exists() || file.isDirectory()) {
-			throw new IllegalArgumentException("Wrong file " + file);
+		if (!rootPath.exists()) {
+			throw new IllegalStateException("root path does not exist " + rootPath);
+		}
+		if (!rootPath.isDirectory()) {
+			throw new IllegalStateException("root path must be a directory " + rootPath);
+		}
+		if (file == null) {
+			throw new NullPointerException("file cannot be null");
+		}
+		if (!file.exists()) {
+			throw new IllegalStateException("file does not exist " + file);
+		}
+		if (file.isDirectory()) {
+			throw new IllegalStateException("file cannot be a directory " + file);
 		}
 	}
 
