@@ -107,6 +107,10 @@ public class MergeFilesTask extends AbstractExecutionTask<Long> {
 							}
 						}
 					}
+					if (candidates.isEmpty()) {
+						// Files are different. Store the first one
+						copyMoveFile(item1, copy, keepPath);
+					}
 					if (line2 == null) {
 						// Reached EOF
 						return Collections.singletonList(CompletableFuture.completedFuture(duplicates));
