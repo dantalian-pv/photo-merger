@@ -1,7 +1,11 @@
 package ru.dantalian.photomerger.ui.elements;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -14,6 +18,7 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 
 import ru.dantalian.photomerger.core.model.DirItem;
+import ru.dantalian.photomerger.core.utils.FileItemUtils;
 import ru.dantalian.photomerger.ui.backend.TaskTrigger;
 
 public class TargetButton {
@@ -43,29 +48,25 @@ public class TargetButton {
 						dd.setMessage(messages.getString(InterfaceStrings.SET_TARGET));
 						dd.setText(messages.getString(InterfaceStrings.SET_DIR));
 						final String dir = dd.open();
-						if (dir != null) {
-							final String tdir = dir + "/";
-							final String[] items = list.getItems();
-							boolean err = false;
-							for (String sdir : items) {
-								sdir += "/";
-								if (tdir.equals(sdir) || tdir.contains(sdir) || sdir.contains(tdir)) {
-									final MessageBox messageBox = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
-									messageBox.setText(messages.getString(InterfaceStrings.ERROR_TITLE));
-									messageBox.setMessage(messages.getString(InterfaceStrings.DIFFER_TARGET));
-									messageBox.open();
-									err = true;
-									break;
-								}
-							}
-							if (err) {
-								continue;
-							}
-							taskTrigger.startStop(true, new DirItem(new File(dir)));
-							return;
-						} else {
+						if (dir == null) {
+							// No target dir is selected
 							return;
 						}
+						final Path tdir = Paths.get(dir);
+						final java.util.List<Path> items = Arrays.asList(list.getItems())
+								.stream()
+								.map(aItem -> Paths.get(aItem))
+								.collect(Collectors.toList());
+						if (FileItemUtils.hasParentInSources(tdir, items)) {
+							final MessageBox messageBox = new MessageBox(shell, SWT.ICON_ERROR | SWT.OK);
+							messageBox.setText(messages.getString(InterfaceStrings.ERROR_TITLE));
+							messageBox.setMessage(messages.getString(InterfaceStrings.DIFFER_TARGET));
+							messageBox.open();
+							// Show "Select Target" dialog again
+							continue;
+						}
+						taskTrigger.startStop(true, new DirItem(new File(dir)));
+						return;
 					}
 				}
 			}

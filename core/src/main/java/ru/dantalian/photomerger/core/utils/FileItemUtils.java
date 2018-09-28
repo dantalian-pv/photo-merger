@@ -4,6 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Collection;
 
 import ru.dantalian.photomerger.core.model.FileItem;
 
@@ -53,6 +55,24 @@ public class FileItemUtils {
 			}
 			return crc.getValue();
 		}
+	}
+
+	public static boolean hasParentInSources(final Path newSource, final Collection<Path> sources) {
+		for (final Path sdir : sources) {
+			if (newSource.startsWith(sdir) || sdir.startsWith(newSource)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static boolean hasParentToNewSource(final Path newSource, final Collection<Path> sources) {
+		for (final Path sdir : sources) {
+			if (sdir.startsWith(newSource) && !sdir.equals(newSource)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static void validate(final File rootPath, final File file) {
