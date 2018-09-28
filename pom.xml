@@ -181,7 +181,7 @@
 			<activation>
 				<os>
 					<family>unix</family>
-					<arch>amd64</arch>
+					<arch>x86</arch>
 				</os>
 			</activation>
 			<properties>
@@ -194,6 +194,7 @@
 			<activation>
 				<os>
 					<family>windows</family>
+					<arch>amd64</arch>
 				</os>
 			</activation>
 			<properties>
@@ -206,6 +207,7 @@
 			<activation>
 				<os>
 					<family>windows</family>
+					<arch>x86</arch>
 				</os>
 			</activation>
 			<properties>
