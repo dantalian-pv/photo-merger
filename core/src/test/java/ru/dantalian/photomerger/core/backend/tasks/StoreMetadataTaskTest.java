@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.core.backend;
+package ru.dantalian.photomerger.core.backend.tasks;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -22,6 +22,7 @@ import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import ru.dantalian.photomerger.core.backend.tasks.StoreMetadataTask;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
 

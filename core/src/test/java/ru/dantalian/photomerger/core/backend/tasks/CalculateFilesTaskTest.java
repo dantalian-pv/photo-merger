@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.core.backend;
+package ru.dantalian.photomerger.core.backend.tasks;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -21,6 +21,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
+import ru.dantalian.photomerger.core.backend.tasks.CalculateFilesTask;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
 

@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.core.backend;
+package ru.dantalian.photomerger.core.backend.tasks;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import ru.dantalian.photomerger.core.AbstractExecutionTask;
 import ru.dantalian.photomerger.core.TaskExecutionException;
+import ru.dantalian.photomerger.core.backend.ThreadPoolFactory;
 import ru.dantalian.photomerger.core.backend.commands.MergeMetadataCommand;
 import ru.dantalian.photomerger.core.events.MergeMetadataEvent;
 import ru.dantalian.photomerger.core.model.DirItem;

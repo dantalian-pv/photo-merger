@@ -12,12 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ru.dantalian.photomerger.core.ExecutionTask;
-import ru.dantalian.photomerger.core.backend.CalculateFilesTask;
 import ru.dantalian.photomerger.core.backend.ChainStoppedException;
 import ru.dantalian.photomerger.core.backend.EventManagerFactory;
-import ru.dantalian.photomerger.core.backend.MergeFilesTask;
-import ru.dantalian.photomerger.core.backend.MergeMetadataTask;
-import ru.dantalian.photomerger.core.backend.StoreMetadataTask;
+import ru.dantalian.photomerger.core.backend.tasks.CalculateFilesTask;
+import ru.dantalian.photomerger.core.backend.tasks.MergeFilesTask;
+import ru.dantalian.photomerger.core.backend.tasks.MergeMetadataTask;
+import ru.dantalian.photomerger.core.backend.tasks.StoreMetadataTask;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
 import ru.dantalian.photomerger.ui.ProgressStateManager;

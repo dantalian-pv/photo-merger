@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.core.backend;
+package ru.dantalian.photomerger.core.backend.tasks;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import ru.dantalian.photomerger.core.AbstractExecutionTask;
 import ru.dantalian.photomerger.core.TaskExecutionException;
+import ru.dantalian.photomerger.core.backend.ThreadPoolFactory;
 import ru.dantalian.photomerger.core.backend.commands.StoreMetadataCommand;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;

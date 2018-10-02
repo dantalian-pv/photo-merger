@@ -1,4 +1,4 @@
-package ru.dantalian.photomerger.core.backend;
+package ru.dantalian.photomerger.core.backend.tasks;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import ru.dantalian.photomerger.core.AbstractExecutionTask;
 import ru.dantalian.photomerger.core.TaskExecutionException;
+import ru.dantalian.photomerger.core.backend.DeleteFileVisitor;
 import ru.dantalian.photomerger.core.events.MergeFilesEvent;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
