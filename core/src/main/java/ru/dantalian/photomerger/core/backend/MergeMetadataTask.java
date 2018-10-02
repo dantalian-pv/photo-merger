@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import ru.dantalian.photomerger.core.AbstractExecutionTask;
 import ru.dantalian.photomerger.core.TaskExecutionException;
-import ru.dantalian.photomerger.core.backend.commands.MergeCommand;
+import ru.dantalian.photomerger.core.backend.commands.MergeMetadataCommand;
 import ru.dantalian.photomerger.core.events.MergeMetadataEvent;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
@@ -62,7 +62,7 @@ public class MergeMetadataTask extends AbstractExecutionTask<DirItem> {
 				logger.info("Complete merged metadata {}", finalItem);
 				return Collections.singletonList(CompletableFuture.completedFuture(finalItem));
 			}
-			final List<MergeCommand> commands = new LinkedList<>();
+			final List<MergeMetadataCommand> commands = new LinkedList<>();
 
 			final Iterator<DirItem> iterator = metadataFiles.iterator();
 			boolean createEmpty = true;
@@ -81,7 +81,7 @@ public class MergeMetadataTask extends AbstractExecutionTask<DirItem> {
 				final DirItem right = iterator.next();
 				this.events.publish(new MergeMetadataEvent(filesCount.incrementAndGet(), totalCount));
 
-				commands.add(new MergeCommand(left, right, this.targetDir));
+				commands.add(new MergeMetadataCommand(left, right, this.targetDir));
 			}
 
 			try {

@@ -15,13 +15,13 @@ import ru.dantalian.photomerger.core.model.FileItem;
 import ru.dantalian.photomerger.core.utils.FileItemUtils;
 import ru.dantalian.photomerger.core.utils.UUIDGenerator;
 
-public class MergeCommand implements Callable<DirItem> {
+public class MergeMetadataCommand implements Callable<DirItem> {
 
 	private final DirItem left;
 	private final DirItem right;
 	private final DirItem targetDir;
 
-	public MergeCommand(final DirItem left, final DirItem right, final DirItem targetDir) {
+	public MergeMetadataCommand(final DirItem left, final DirItem right, final DirItem targetDir) {
 		this.left = left;
 		this.right = right;
 		this.targetDir = targetDir;
