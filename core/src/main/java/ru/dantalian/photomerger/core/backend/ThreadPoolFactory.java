@@ -15,6 +15,8 @@ public final class ThreadPoolFactory {
 
 	public static final String MERGE_META_POOL = "merge-metadata";
 
+	public static final String MERGE_FILES_POOL = "merge-files";
+
 	private static final Map<String, ThreadPoolExecutor> POOL_MAP = new HashMap<>();
 
 	private ThreadPoolFactory() {
