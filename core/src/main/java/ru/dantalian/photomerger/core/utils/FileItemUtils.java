@@ -59,11 +59,15 @@ public class FileItemUtils {
 
 	public static boolean hasParentInSources(final Path newSource, final Collection<Path> sources) {
 		for (final Path sdir : sources) {
-			if (newSource.startsWith(sdir) || sdir.startsWith(newSource)) {
+			if (hasParentInSource(newSource, sdir)) {
 				return true;
 			}
 		}
 		return false;
+	}
+
+	public static boolean hasParentInSource(final Path newSource, final Path source) {
+		return newSource.equals(source) || newSource.startsWith(source) || source.startsWith(newSource);
 	}
 
 	public static boolean hasParentToNewSource(final Path newSource, final Collection<Path> sources) {

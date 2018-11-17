@@ -27,6 +27,7 @@ import ru.dantalian.photomerger.core.events.MergeMetadataEvent;
 import ru.dantalian.photomerger.core.events.StoreMetadataEvent;
 import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.EventManager;
+import ru.dantalian.photomerger.core.utils.FileItemUtils;
 
 public class TasksExecutor {
 
@@ -37,17 +38,17 @@ public class TasksExecutor {
 	private volatile boolean interrupted;
 
 	private volatile boolean finished;
-	
+
 	public TasksExecutor() {
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				started = false;
 				while (!interrupted) {
 					try {
 						Thread.sleep(100);
-					} catch (InterruptedException e) {
+					} catch (final InterruptedException e) {
 						logger.warn("interrupted sleep", e);
 					}
 				}
@@ -57,10 +58,10 @@ public class TasksExecutor {
 			}
 		}));
 	}
-	
+
 	public void execute(final boolean copy, final boolean keep, final File target, final List<File> sources) {
-		this.started = true;
-		
+		started = true;
+
 		long filesCount = 0;
 		Exception ex = null;
 		long duplicates = 0;
@@ -98,12 +99,12 @@ public class TasksExecutor {
 				}
 				checkState();
 				storeMetadataTask.interrupt();
-	
+
 				// Merging all metadata files into one
 				final MergeMetadataTask mergeTask = new MergeMetadataTask(targetDir, metadataFiles, events);
 				final DirItem metadataFile = mergeTask.execute().iterator().next().get();
 				mergeTask.interrupt();
-				
+
 				final MergeFilesTask mergeFiles = new MergeFilesTask(targetDir,
 						metadataFile,
 						copy,
@@ -113,7 +114,7 @@ public class TasksExecutor {
 				duplicates = mergeFiles.execute().iterator().next().get();
 				mergeFiles.interrupt();
 			}
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			logger.error("Failed to calculate files", e);
 			System.err.println("An error has occured. See log for further details");
 			ex = e;
@@ -125,21 +126,21 @@ public class TasksExecutor {
 			logger.error("Executing chain failed", e);
 			ex = e;
 		} finally {
-			this.started = false;
-			this.interrupted = true;
+			started = false;
+			interrupted = true;
 			if (ex == null) {
-				this.finished = true;
+				finished = true;
 				System.out.println("Merged " + filesCount + " files. Found " + duplicates + " duplicates");
 			} else if (ex instanceof ChainStoppedException) {
 				System.out.println("The process was interrupted");
-				this.interrupted = true;
+				interrupted = true;
 			} else {
 				logger.error("Error occured during the merge process", ex);
 			}
 		}
 	}
 
-	private void validate(File target, List<File> sources) throws TaskExecutionException {
+	private void validate(final File target, final List<File> sources) throws TaskExecutionException {
 		if (!target.exists()) {
 			throw new TaskExecutionException("target '" + target + "' does not exist");
 		}
@@ -153,12 +154,12 @@ public class TasksExecutor {
 			if (!src.isDirectory()) {
 				throw new TaskExecutionException("source '" + src + "' is not directory");
 			}
-			if (target.equals(src) || target.toPath().startsWith(src.getPath()) || src.toPath().startsWith(target.getPath())) {
+			if (FileItemUtils.hasParentInSource(target.toPath(), src.toPath())) {
 				throw new TaskExecutionException("Target dir should be different than source dirs");
 			}
 		}
 	}
-	
+
 	private void initProgressListeners(final ProgressBar progressBar) {
 		final EventManager events = EventManagerFactory.getInstance();
 		events.subscribe(CalculateFilesEvent.TOPIC, new CalculateFilesListener(progressBar));
@@ -168,7 +169,7 @@ public class TasksExecutor {
 	}
 
 	private void checkState() throws ChainStoppedException {
-		if (!this.started) {
+		if (!started) {
 			throw new ChainStoppedException();
 		}
 	}
