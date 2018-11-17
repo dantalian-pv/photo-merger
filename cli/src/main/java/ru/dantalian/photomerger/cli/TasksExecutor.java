@@ -115,11 +115,13 @@ public class TasksExecutor {
 			}
 		} catch (InterruptedException e) {
 			logger.error("Failed to calculate files", e);
+			System.err.println("An error has occured. See log for further details");
 			ex = e;
 		} catch(final ChainStoppedException e) {
 			// Ignore it
 			ex = e;
 		} catch(final Exception e) {
+			System.err.println("An error has occured. See log for further details");
 			logger.error("Executing chain failed", e);
 			ex = e;
 		} finally {
@@ -151,7 +153,7 @@ public class TasksExecutor {
 			if (!src.isDirectory()) {
 				throw new TaskExecutionException("source '" + src + "' is not directory");
 			}
-			if (target.equals(src) || target.getPath().contains(src.getPath()) || src.getPath().contains(target.getPath())) {
+			if (target.equals(src) || target.toPath().startsWith(src.getPath()) || src.toPath().startsWith(target.getPath())) {
 				throw new TaskExecutionException("Target dir should be different than source dirs");
 			}
 		}
