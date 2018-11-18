@@ -3,6 +3,7 @@ package ru.dantalian.photomerger.cli;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
@@ -14,6 +15,7 @@ import ru.dantalian.photomerger.cli.events.CalculateFilesListener;
 import ru.dantalian.photomerger.cli.events.MergeFilesListener;
 import ru.dantalian.photomerger.cli.events.MergeMetadataListener;
 import ru.dantalian.photomerger.cli.events.StoreMetadataListener;
+import ru.dantalian.photomerger.core.ExecutionTask;
 import ru.dantalian.photomerger.core.TaskExecutionException;
 import ru.dantalian.photomerger.core.backend.ChainStoppedException;
 import ru.dantalian.photomerger.core.backend.EventManagerFactory;
@@ -39,12 +41,20 @@ public class TasksExecutor {
 
 	private volatile boolean finished;
 
+	private final Queue<ExecutionTask<?>> tasks = new LinkedList<>();
+
 	public TasksExecutor() {
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				started = false;
+				ExecutionTask<?> task = null;
+				synchronized (tasks) {
+					while ((task = tasks.poll()) != null) {
+						task.interrupt();
+					}
+				}
 				while (!interrupted) {
 					try {
 						Thread.sleep(100);
@@ -79,6 +89,9 @@ public class TasksExecutor {
 				final EventManager events = EventManagerFactory.getInstance();
 				final CalculateFilesTask calculateFilesTask = new CalculateFilesTask(
 						sourceDirs, targetDir, events);
+				if (addTaskToQueue(calculateFilesTask)) {
+					return;
+				}
 				final List<Future<Long>> calculateFiles = calculateFilesTask.execute();
 				long calcCount = 0;
 				for (final Future<Long> future: calculateFiles) {
@@ -91,6 +104,9 @@ public class TasksExecutor {
 
 				final StoreMetadataTask storeMetadataTask = new StoreMetadataTask(sourceDirs, targetDir, filesCount,
 						events);
+				if (addTaskToQueue(storeMetadataTask)) {
+					return;
+				}
 				final List<Future<List<DirItem>>> storeMetadata = storeMetadataTask.execute();
 				final List<DirItem> metadataFiles = new LinkedList<>();
 				for (final Future<List<DirItem>> future: storeMetadata) {
@@ -102,6 +118,9 @@ public class TasksExecutor {
 
 				// Merging all metadata files into one
 				final MergeMetadataTask mergeTask = new MergeMetadataTask(targetDir, metadataFiles, events);
+				if (addTaskToQueue(mergeTask)) {
+					return;
+				}
 				final DirItem metadataFile = mergeTask.execute().iterator().next().get();
 				mergeTask.interrupt();
 
@@ -138,6 +157,17 @@ public class TasksExecutor {
 				logger.error("Error occured during the merge process", ex);
 			}
 		}
+	}
+
+	private boolean addTaskToQueue(final ExecutionTask<?> calculateFilesTask) throws ChainStoppedException {
+		synchronized (tasks) {
+			if (!started) {
+				return true;
+			}
+			tasks.add(calculateFilesTask);
+		}
+		checkState();
+		return false;
 	}
 
 	private void validate(final File target, final List<File> sources) throws TaskExecutionException {
