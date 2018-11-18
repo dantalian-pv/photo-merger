@@ -30,15 +30,15 @@ import ru.dantalian.photomerger.core.model.FileItem;
 import ru.dantalian.photomerger.core.utils.FileItemUtils;
 
 public class MergeFilesCommand implements Callable<Long> {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(MergeFilesCommand.class);
 
 	private final EventManager events;
-	
+
 	private final DirItem targetDir;
 
 	private final DirItem metadataFile;
-	
+
 	private final boolean copy;
 
 	private final boolean keepPath;
@@ -48,9 +48,11 @@ public class MergeFilesCommand implements Callable<Long> {
 	private final long totalCount;
 
 	private final AtomicLong filesCount = new AtomicLong(0);
-	
+
+	private final boolean dryRun;
+
 	public MergeFilesCommand(final DirItem targetDir,
-			final DirItem metadataFile, boolean copy, boolean keepPath, long totalCount,
+			final DirItem metadataFile, final boolean copy, final boolean keepPath, final long totalCount,
 			final EventManager events,
 			final AtomicBoolean interrupted) {
 		this.targetDir = targetDir;
@@ -60,6 +62,8 @@ public class MergeFilesCommand implements Callable<Long> {
 		this.totalCount = totalCount;
 		this.events = events;
 		this.interrupted = interrupted;
+
+		dryRun = Boolean.parseBoolean(System.getProperty("debug.dry-run", "false"));
 	}
 
 	@Override
@@ -69,7 +73,7 @@ public class MergeFilesCommand implements Callable<Long> {
 			String line1 = null;
 			String line2 = null;
 			while (true) {
-				if (this.interrupted.get()) {
+				if (interrupted.get()) {
 					Long.valueOf(duplicates);
 				}
 				line1 = (line1 == null) ? reader.readLine() : line1;
@@ -77,7 +81,7 @@ public class MergeFilesCommand implements Callable<Long> {
 				if (line1 != null) {
 					line2 = (line2 == null) ? reader.readLine() : line2;
 				}
-				FileItem item1 = (line1 != null) ? FileItemUtils.createFileItem(line1, false) : null;
+				final FileItem item1 = (line1 != null) ? FileItemUtils.createFileItem(line1, false) : null;
 				FileItem item2 = (line2 != null) ? FileItemUtils.createFileItem(line2, false) : null;
 				if (item1 != null && item2 != null) {
 					// Compare
@@ -107,7 +111,7 @@ public class MergeFilesCommand implements Callable<Long> {
 								} else {
 									duplicates++;
 									logger.info("Found duplicate {} and {}", list.get(0), list.get(i));
-									this.events.publish(new MergeFilesEvent(this.filesCount.incrementAndGet(), totalCount));
+									events.publish(new MergeFilesEvent(filesCount.incrementAndGet(), totalCount));
 								}
 							}
 						}
@@ -134,26 +138,33 @@ public class MergeFilesCommand implements Callable<Long> {
 					return Long.valueOf(duplicates);
 				}
 			}
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			throw new TaskExecutionException("Failed to merge files", e);
 		} finally {
-			// Delete metadata directory and its content
-			final File metadataDir = metadataFile.getDir().getParentFile();
-			if (metadataDir.getName().equals(".metadata")) {
-				try {
-					Files.walkFileTree(metadataDir.toPath(), new DeleteFileVisitor());
-				} catch (final IOException e) {
-					logger.error("Failed to remove temporary metadata files", e);
+			final boolean debug = Boolean.parseBoolean(System.getProperty("debug.keep.metadata", "false"));
+			if (!debug) {
+				// Delete metadata directory and its content
+				final File metadataDir = metadataFile.getDir().getParentFile();
+				if (metadataDir.getName().equals(".metadata")) {
+					try {
+						Files.walkFileTree(metadataDir.toPath(), new DeleteFileVisitor());
+					} catch (final IOException e) {
+						logger.error("Failed to remove temporary metadata files", e);
+					}
 				}
 			}
 		}
 	}
 
 	private void copyMoveFile(final FileItem item, final boolean copy, final boolean keepPath) throws IOException {
-		if (this.interrupted.get()) {
+		if (interrupted.get()) {
 			return;
 		}
-		Path target = this.targetDir.getDir().toPath();
+		if (dryRun) {
+			copyMoveEvent();
+			return;
+		}
+		Path target = targetDir.getDir().toPath();
 		if (keepPath) {
 			String subpath = item.getPath().replace(item.getRootPath(), "");
 			if (subpath.startsWith("/")) {
@@ -163,15 +174,15 @@ public class MergeFilesCommand implements Callable<Long> {
 		} else {
 			target = target.resolve(new File(item.getPath()).getName());
 		}
-		Path source = Paths.get(item.getPath());
+		final Path source = Paths.get(item.getPath());
 		if (source.equals(target)) {
 			return;
 		}
 		if (target.toFile().exists()) {
 			logger.debug("Target file already exists {}", target);
 			// Make additional check by comparing crc
-			FileItem targetItem = FileItemUtils.createFileItem(this.targetDir.getDir(), target.toFile(), true);
-			FileItem srcItem = item.getCrc() == 0 ?
+			final FileItem targetItem = FileItemUtils.createFileItem(targetDir.getDir(), target.toFile(), true);
+			final FileItem srcItem = item.getCrc() == 0 ?
 					FileItemUtils.createFileItem(new File(item.getRootPath()), source.toFile(), true)
 					: item;
 			if (targetItem.compareTo(srcItem) == 0) {
@@ -197,7 +208,11 @@ public class MergeFilesCommand implements Callable<Long> {
 		} else {
 			Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
 		}
-		this.events.publish(new MergeFilesEvent(this.filesCount.incrementAndGet(), totalCount));
+		copyMoveEvent();
+	}
+
+	private void copyMoveEvent() {
+		events.publish(new MergeFilesEvent(filesCount.incrementAndGet(), totalCount));
 	}
 
 }
