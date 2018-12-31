@@ -5,8 +5,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Comparator;
 
+import ru.dantalian.photomerger.core.model.DirItem;
 import ru.dantalian.photomerger.core.model.FileItem;
 
 public class FileItemUtils {
@@ -14,6 +17,14 @@ public class FileItemUtils {
 	public static final String SEPARATOR = "::";
 
 	private FileItemUtils() {
+	}
+
+	public static Comparator<FileItem> fileItemComparator(final DirItem aTargetDir) {
+		return new FileItemComparator(aTargetDir);
+	}
+
+	public static boolean isInTarget(final DirItem aTargetDir, final FileItem aFileItem) {
+		return Paths.get(aTargetDir.getPath()).equals(Paths.get(aFileItem.getRootPath()));
 	}
 
 	public static String externalize(final FileItem aFileItem) throws IOException {

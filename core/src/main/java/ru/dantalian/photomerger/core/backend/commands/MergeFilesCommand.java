@@ -96,21 +96,28 @@ public class MergeFilesCommand implements Callable<Long> {
 						}
 						final Long crc = FileItemUtils.calculateChecksum(new File(item2.getPath()));
 						final FileItem itemCrc = new FileItem(item2.getRootPath(), item2.getPath(), crc, item2.getSize());
-						candidates.putIfAbsent(crc, new LinkedList<>());
-						candidates.get(crc).add(itemCrc);
+						candidates.computeIfAbsent(crc, (aItem) -> new LinkedList<>()).add(itemCrc);
 						line2 = reader.readLine();
 						item2 = (line2 != null) ? FileItemUtils.createFileItem(line2, false): null;
 					}
 					if (!candidates.isEmpty()) {
 						for(final Entry<Long, List<FileItem>> entry: candidates.entrySet()) {
 							final List<FileItem> list = entry.getValue();
+							// Sort this list
+							Collections.sort(list, FileItemUtils.fileItemComparator(targetDir));
 							for (int i = 0; i < list.size(); i++) {
 								if (i == 0) {
-									// Copy/move only one file
-									copyMoveFile(list.get(0), copy, keepPath);
+									final FileItem first = list.get(0);
+									// If first item is in target, then just skip it
+									if (FileItemUtils.isInTarget(targetDir, first)) {
+										logger.info("Duplicate is in the target dir already {}", first);
+									} else {
+										// Copy/move only one file
+										copyMoveFile(first, copy, keepPath);
+									}
 								} else {
 									duplicates++;
-									logger.info("Found duplicate {} and {}", list.get(0), list.get(i));
+									logger.info("Found duplicate i: {} {} and {}", i, list.get(0), list.get(i));
 									events.publish(new MergeFilesEvent(filesCount.incrementAndGet(), totalCount));
 								}
 							}
