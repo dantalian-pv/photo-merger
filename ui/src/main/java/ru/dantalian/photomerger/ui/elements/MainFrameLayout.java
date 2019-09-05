@@ -9,12 +9,14 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.List;
 import org.eclipse.swt.widgets.Shell;
 
+import ru.dantalian.photomerger.core.MergeAction;
 import ru.dantalian.photomerger.core.backend.EventManagerFactory;
 import ru.dantalian.photomerger.core.events.CalculateFilesEvent;
 import ru.dantalian.photomerger.core.events.MergeFilesEvent;
@@ -43,7 +45,7 @@ public class MainFrameLayout implements TaskTrigger {
 
 	private final List list;
 
-	private final Button copyButton;
+	private final Combo actionBox;
 
 	private final Button keepButton;
 
@@ -67,7 +69,7 @@ public class MainFrameLayout implements TaskTrigger {
 		final GridLayout d1 = new GridLayout(3, false);
 		top.setLayout(d1);
 
-		this.copyButton = new CopyCheckBox(top, messages).getButton();
+		this.actionBox = new ActionComboBox(top, messages).getBox();
 
 		final Label separator = new Label(top, SWT.HORIZONTAL);
 		separator.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -135,7 +137,7 @@ public class MainFrameLayout implements TaskTrigger {
 				this.progressTask,
 				targetDir,
 				scrDirs,
-				this.copyButton.getSelection(),
+				MergeAction.values()[this.actionBox.getSelectionIndex()],
 				this.keepButton.getSelection(),
 				this.messages);
 		this.chainTimer.schedule(this.currentChain, 1);
@@ -151,7 +153,7 @@ public class MainFrameLayout implements TaskTrigger {
 						(start) ? messages.getString(InterfaceStrings.STOP) : messages.getString(InterfaceStrings.START));
 				list.setEnabled(!start);
 				srcButton.setEnabled(!start);
-				copyButton.setEnabled(!start);
+				actionBox.setEnabled(!start);
 				keepButton.setEnabled(!start);
 			}
 

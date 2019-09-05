@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ru.dantalian.photomerger.core.MergeAction;
 import ru.dantalian.photomerger.core.TaskExecutionException;
 import ru.dantalian.photomerger.core.backend.DeleteFileVisitor;
 import ru.dantalian.photomerger.core.events.MergeFilesEvent;
@@ -39,7 +40,7 @@ public class MergeFilesCommand implements Callable<Long> {
 
 	private final DirItem metadataFile;
 
-	private final boolean copy;
+	private final MergeAction action;
 
 	private final boolean keepPath;
 
@@ -52,12 +53,12 @@ public class MergeFilesCommand implements Callable<Long> {
 	private final boolean dryRun;
 
 	public MergeFilesCommand(final DirItem targetDir,
-			final DirItem metadataFile, final boolean copy, final boolean keepPath, final long totalCount,
+			final DirItem metadataFile, final MergeAction action, final boolean keepPath, final long totalCount,
 			final EventManager events,
 			final AtomicBoolean interrupted) {
 		this.targetDir = targetDir;
 		this.metadataFile = metadataFile;
-		this.copy = copy;
+		this.action = action;
 		this.keepPath = keepPath;
 		this.totalCount = totalCount;
 		this.events = events;
@@ -105,27 +106,31 @@ public class MergeFilesCommand implements Callable<Long> {
 							final List<FileItem> list = entry.getValue();
 							// Sort this list
 							Collections.sort(list, FileItemUtils.fileItemComparator(targetDir));
-							for (int i = 0; i < list.size(); i++) {
-								if (i == 0) {
-									final FileItem first = list.get(0);
-									// If first item is in target, then just skip it
-									if (FileItemUtils.isInTarget(targetDir, first)) {
-										logger.info("Duplicate is in the target dir already {}", first);
+							if (isCopyMove()) {
+								for (int i = 0; i < list.size(); i++) {
+									if (i == 0) {
+										final FileItem first = list.get(0);
+										// If first item is in target, then just skip it
+										if (FileItemUtils.isInTarget(targetDir, first)) {
+											logger.info("Duplicate is in the target dir already {}", first);
+										} else {
+											// Copy/move only one file
+											copyMoveFile(first, action, keepPath);
+										}
 									} else {
-										// Copy/move only one file
-										copyMoveFile(first, copy, keepPath);
+										duplicates++;
+										logger.info("Found duplicate i: {} {} and {}", i, list.get(0), list.get(i));
+										events.publish(new MergeFilesEvent(filesCount.incrementAndGet(), totalCount));
 									}
-								} else {
-									duplicates++;
-									logger.info("Found duplicate i: {} {} and {}", i, list.get(0), list.get(i));
-									events.publish(new MergeFilesEvent(filesCount.incrementAndGet(), totalCount));
 								}
+							} else if (action == MergeAction.DELETE) {
+								duplicates += deleteDuplicates(list);
 							}
 						}
 					}
 					if (candidates.isEmpty()) {
 						// Files are different. Store the first one
-						copyMoveFile(item1, copy, keepPath);
+						copyMoveFile(item1, action, keepPath);
 					}
 					if (line2 == null) {
 						// Reached EOF
@@ -134,11 +139,11 @@ public class MergeFilesCommand implements Callable<Long> {
 					line1 = line2;
 					line2 = null;
 				} else if (item1 != null) {
-					copyMoveFile(item1, copy, keepPath);
+					copyMoveFile(item1, action, keepPath);
 					line1 = null;
 					line2 = null;
 				} else if (item2 != null) {
-					copyMoveFile(item2, copy, keepPath);
+					copyMoveFile(item2, action, keepPath);
 					line1 = null;
 					line2 = null;
 				} else {
@@ -163,8 +168,56 @@ public class MergeFilesCommand implements Callable<Long> {
 		}
 	}
 
-	private void copyMoveFile(final FileItem item, final boolean copy, final boolean keepPath) throws IOException {
+	private long deleteDuplicates(final List<FileItem> aFilesToDelete) throws IOException {
+		long duplicates = 0;
 		if (interrupted.get()) {
+			return duplicates;
+		}
+		FileItem targetItem = null;
+		for (final FileItem item: aFilesToDelete) {
+			if (FileItemUtils.isInTarget(targetDir, item)) {
+				targetItem = item;
+				break;
+			}
+		}
+		final List<FileItem> toDelete = new LinkedList<>(aFilesToDelete);
+		if (targetItem == null) {
+			// No duplicate in target folder. Take first item as target
+			targetItem = toDelete.remove(0);
+		}
+		for (final FileItem item: toDelete) {
+			// Remove duplicate only from source
+			if (!FileItemUtils.isInTarget(targetDir, item)) {
+				logger.info("Deleting duplicate {} for {}", item, targetItem);
+				if (!dryRun) {
+					final Path path = Paths.get(item.getPath());
+					Files.delete(path);
+					// Also delete parent directories recoursivly, if it's empty
+					Path parent = path.getParent();
+					while (parent != null && !Paths.get(item.getRootPath()).equals(parent)) {
+						final File dir = parent.toFile();
+						if (dir.isDirectory() && dir.listFiles().length == 0) {
+							logger.info("Deleting empty directory {}", parent);
+							Files.delete(parent);
+						} else {
+							break;
+						}
+						parent = parent.getParent();
+					}
+				}
+				duplicates++;
+			}
+			copyMoveEvent();
+		}
+		return duplicates;
+	}
+
+	private boolean isCopyMove() {
+		return action == MergeAction.COPY || action == MergeAction.MOVE;
+	}
+
+	private void copyMoveFile(final FileItem item, final MergeAction action, final boolean keepPath) throws IOException {
+		if (interrupted.get() || !isCopyMove()) {
 			return;
 		}
 		if (dryRun) {
@@ -210,10 +263,18 @@ public class MergeFilesCommand implements Callable<Long> {
 				dir.mkdirs();
 			}
 		}
-		if (copy) {
-			Files.copy(source, target, StandardCopyOption.COPY_ATTRIBUTES);
-		} else {
-			Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+		switch (action) {
+			case COPY: {
+				Files.copy(source, target, StandardCopyOption.COPY_ATTRIBUTES);
+				break;
+			}
+			case MOVE: {
+				Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+				break;
+			}
+			default: {
+				throw new IllegalArgumentException("Unsupported action: " + action);
+			}
 		}
 		copyMoveEvent();
 	}

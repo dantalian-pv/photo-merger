@@ -16,6 +16,7 @@ import ru.dantalian.photomerger.cli.events.MergeFilesListener;
 import ru.dantalian.photomerger.cli.events.MergeMetadataListener;
 import ru.dantalian.photomerger.cli.events.StoreMetadataListener;
 import ru.dantalian.photomerger.core.ExecutionTask;
+import ru.dantalian.photomerger.core.MergeAction;
 import ru.dantalian.photomerger.core.TaskExecutionException;
 import ru.dantalian.photomerger.core.backend.ChainStoppedException;
 import ru.dantalian.photomerger.core.backend.EventManagerFactory;
@@ -69,7 +70,7 @@ public class TasksExecutor {
 		}));
 	}
 
-	public void execute(final boolean copy, final boolean keep, final File target, final List<File> sources) {
+	public void execute(final MergeAction action, final boolean keep, final File target, final List<File> sources) {
 		started = true;
 
 		long filesCount = 0;
@@ -126,7 +127,7 @@ public class TasksExecutor {
 
 				final MergeFilesTask mergeFiles = new MergeFilesTask(targetDir,
 						metadataFile,
-						copy,
+						action,
 						keep,
 						filesCount,
 						events);

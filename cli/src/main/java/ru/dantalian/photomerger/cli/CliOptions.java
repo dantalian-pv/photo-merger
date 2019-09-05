@@ -7,6 +7,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Help.Visibility;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import ru.dantalian.photomerger.core.MergeAction;
 
 @Command(name = "photo-merger-cli")
 public class CliOptions {
@@ -17,9 +18,9 @@ public class CliOptions {
 	@Option(names = { "-t", "--target" }, paramLabel = "DIR", required = true, description = "Target folder")
 	private File target;
 
-	@Option(names = { "-c", "--copy" }, showDefaultValue = Visibility.ALWAYS, defaultValue = "true",
-			description = { "Move files if 'false'", "Copy files if 'true'", "Use -c=false or --copy=false to change" })
-	private boolean copy = true;
+	@Option(names = { "-a", "--action" }, showDefaultValue = Visibility.ALWAYS, defaultValue = "COPY",
+			description = { "Copy/Move unique files to target folder", "Or Delete dublicates from sources", "Values: COPY, MOVE, DELETE" })
+	private MergeAction action = MergeAction.COPY;
 
 	@Option(names = { "-k", "--keep-path" }, showDefaultValue = Visibility.ALWAYS, defaultValue = "true",
 			description = { "Flatten all subdirectories if 'false'", "Keep subdirectory structure if 'true'",
@@ -37,8 +38,8 @@ public class CliOptions {
 		return target;
 	}
 
-	public boolean isCopy() {
-		return copy;
+	public MergeAction getAction() {
+		return action;
 	}
 
 	public boolean isKeepPath() {

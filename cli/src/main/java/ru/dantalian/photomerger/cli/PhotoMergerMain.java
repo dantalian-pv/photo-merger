@@ -33,7 +33,7 @@ public class PhotoMergerMain {
 		}
 		printSettings(cliOptions);
 		validate(cliOptions.getTarget(), cliOptions.getSource());
-		new TasksExecutor().execute(cliOptions.isCopy(),
+		new TasksExecutor().execute(cliOptions.getAction(),
 				cliOptions.isKeepPath(),
 				cliOptions.getTarget(),
 				cliOptions.getSource());
@@ -66,7 +66,7 @@ public class PhotoMergerMain {
 		}
 	}
 
-	private void validateDir(File target) throws CliException {
+	private void validateDir(final File target) throws CliException {
 		if (!target.exists()) {
 			throw new CliException("dir does not exist " + target.getPath());
 		}
@@ -88,7 +88,7 @@ public class PhotoMergerMain {
 
 	private void printSettings(final CliOptions cliOptions) {
 		System.out.println("Current settings:");
-		System.out.println("copy = " + cliOptions.isCopy());
+		System.out.println("action = " + cliOptions.getAction());
 		System.out.println("keep = " + cliOptions.isKeepPath());
 		System.out.println("src = " + cliOptions.getSource());
 		System.out.println("target = " + cliOptions.getTarget());

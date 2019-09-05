@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ru.dantalian.photomerger.core.ExecutionTask;
+import ru.dantalian.photomerger.core.MergeAction;
 import ru.dantalian.photomerger.core.backend.ChainStoppedException;
 import ru.dantalian.photomerger.core.backend.EventManagerFactory;
 import ru.dantalian.photomerger.core.backend.tasks.CalculateFilesTask;
@@ -31,23 +32,23 @@ public final class ChainTask extends TimerTask {
 
 	private final DirItem targetDir;
 
-	private final boolean copy;
+	private final MergeAction action;
 
 	private final boolean keepPath;
 
 	private final List<DirItem> scrDirs;
 
 	private final ResourceBundle messages;
-	
+
 	private volatile ExecutionTask<?> currentTask;
 
 	public ChainTask(final ProgressStateManager progress, final DirItem targetDir,
-			List<DirItem> scrDirs, final boolean copy, final boolean keepPath,
-			ResourceBundle messages) {
+			final List<DirItem> scrDirs, final MergeAction action, final boolean keepPath,
+			final ResourceBundle messages) {
 		this.progress = progress;
 		this.targetDir = targetDir;
 		this.scrDirs = Collections.unmodifiableList(scrDirs);
-		this.copy = copy;
+		this.action = action;
 		this.keepPath = keepPath;
 		this.messages = messages;
 	}
@@ -96,14 +97,14 @@ public final class ChainTask extends TimerTask {
 			checkState();
 			final MergeFilesTask mergeFiles = new MergeFilesTask(targetDir,
 					metadataFile,
-					copy,
+					action,
 					keepPath,
 					filesCount,
 					events);
 			this.currentTask = mergeFiles;
 			duplicates = mergeFiles.execute().iterator().next().get();
 			mergeFiles.interrupt();
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			logger.error("Failed to calculate files", e);
 			ex = e;
 		} catch (final ChainStoppedException e) {
@@ -124,7 +125,7 @@ public final class ChainTask extends TimerTask {
 			}
 		}
 	}
-	
+
 	public void interrupt() {
 		if (this.currentTask != null) {
 			this.currentTask.interrupt();

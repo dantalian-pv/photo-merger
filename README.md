@@ -3,8 +3,8 @@ Merge multiple folders into one with files deduplication function based on CRC c
 
 ## Preconditions
 
-This application generally was created to copy/move photographies placed in different folders into one folder avoiding duplications. But the application can also be used for any types of files.
-Assume the situation when you copy photographies from your mobile phone into different folders, drives or devices multiple times just to free the space on your phone. And now you have multiple copies of one file in different places. After a while you decided to re-structure and rename some of this photos in one of the folders.
+This application generally was created to copy/move photographs placed in different folders into one folder avoiding duplications. But the application can also be used for any types of files.
+Assume the situation when you copy photographs from your mobile phone into different folders, drives or devices multiple times just to free the space on your phone. And now you have multiple copies of one file in different places. After a while you decided to re-structure and rename some of this photos in one of the folders.
 But after some time you want to get rid of this multiple copies and finally make one well structured catalog.
 Exactly for this purpose this application was created. The application detects duplications even if a file was renamed or has a different path.
 
@@ -49,10 +49,10 @@ To run the application `jvm` (`java`, `jre`) version 8.0 or higher is needed
 * Extract archive from `cli/target/photo-merger-cli-0.1.1.tar.gz` or `ui/target/photo-merger-ui-0.1.1.tar.gz` to any suitable place
 * Go into `bin/` sub-folder 
 * Run the application using:
-  * `$> ./photo-merger-cli` - for command line version on linux
-  * `$> photo-merger-cli.bat` - for command line version on windows
-  * `$> ./photo-merger-ui` - for UI version on linux
-  * `$> photo-merger-ui.bat` - for UI version on windows
+  * `$> ./photo-merger-cli` - for command line version on Linux
+  * `$> photo-merger-cli.bat` - for command line version on Windows
+  * `$> ./photo-merger-ui` - for UI version on Linux
+  * `$> photo-merger-ui.bat` - for UI version on Windows
 
 Log files will be places in `logs/` sub-folder
 
@@ -60,14 +60,14 @@ Log files will be places in `logs/` sub-folder
 
 The application contains:
 
-* "Copy/Move files" checkbox - if selected, copy files to target folder, otherwise - move files
-* "Keep path" - if checked - copy/move files keeping original folder structure, otherwise - copy only file without subfolders. (See details below)
+* "Copy files/Move files/Delete duplicates" combo box - copy/move files from source directories to target directory or delete duplicates from source directories
+* "Keep path" - if checked - copy/move files keeping original folder structure, otherwise - copy/move only files without subfolders. (See details below)
 * "+" - Add source folders (can be multiple) to the list
 * "Start" - Select the "target" folder and start the process
 
 ### "Keep path" explanation
 
-When "Keep path" checkbox is selected the application will copy/move files keeping subfolder structure.
+When "Keep path" checkbox is selected the application will copy/move files keeping subfolder structure. The checkbox is not relevant when "Delete duplicates" is selected.
 
 For example:
 

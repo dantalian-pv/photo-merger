@@ -12,6 +12,8 @@ public interface InterfaceStrings {
 
 	public static final String MOVE = "move";
 
+	public static final String DELETE = "delete";
+
 	public static final String KEEP_PATH = "keep";
 
 	public static final String CALCULATING_AMOUNT_OF_WORK = "calculateWork";
@@ -29,7 +31,7 @@ public interface InterfaceStrings {
 	public static final String ERROR_TITLE = "errorTitle";
 
 	public static final String NO_SOURCE = "noSource";
-	
+
 	public static final String DIFFER_TARGET = "differTarget";
 
 	public static final String REPLACE_WITH_PARENT = "replaceWithParent";
