@@ -16,9 +16,7 @@ The application has the next workflow:
 * Store this metadata into a temporary file inside target folder, because metadata of all files, possibly, will not fit into RAM;
 * Sort this metadata by file size to simplify files comparison; 
 * Calculate CRC (crc64) for files with the same size which are going to be merged into one "target" folder;
-* Search for CRC duplications in the list and copy/move only one file of all duplicates, or just move/copy a file if no duplicates found;
-
-For preventing any data loss the application only moves/copies files, but never deletes or rewrites them.
+* Search for CRC duplications in the list and copy/move only one file of all duplicates (or just move/copy a file to target folder if no duplicates found), or delete duplicates from source folders if "Delete duplicates" option selected;
 
 ## Usage
 
